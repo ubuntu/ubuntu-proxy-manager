@@ -1,0 +1,55 @@
+# This is for the CI. To run it, please use:
+# golangci-lint run -c .golangci-ci.yaml.
+
+# Please keep the list in sync with .golangci-ide.yaml. For rationale, see the other file.
+
+linters:
+  # linters to run in addition to default ones
+  enable:
+    - dupl
+    - durationcheck
+    - errname
+    - errorlint
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - gci
+    - godot
+    - gofmt
+    - gosec
+    - ifshort
+    - misspell
+    - revive
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+    ##- wrapcheck # To think properly about it
+
+run:
+  # Most of the time, it’s taking less than 20s, but some builders are slower, so takes 2m
+  timeout: 2m
+
+# Get all linter issues, even if duplicated
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude:
+    # EXC0001 errcheck: most errors are in defer calls, which are safe to ignore and idiomatic Go (would be good to only ignore defer ones though)
+    - 'Error return value of .*Close` is not checked'
+  #fix: true # we don’t want this in CI
+
+nolintlint:
+  require-explanation: true
+  require-specific: true
+
+linters-settings:
+   # Forbid the usage of deprecated ioutil and debug prints
+  forbidigo:
+    forbid:
+      - ioutil\.
+      - ^print(f|ln)?\($

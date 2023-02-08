@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.ubuntu.ProxyManager
+Exec=/bin/false
+SystemdService=ubuntu-proxy-manager.service
