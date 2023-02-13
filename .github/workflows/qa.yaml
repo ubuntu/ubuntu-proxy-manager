@@ -1,0 +1,69 @@
+name: QA
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+  pull_request:
+
+jobs:
+  quality:
+    name: Code quality and mod files up to date
+    runs-on: ubuntu-latest
+    container: ubuntu:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt update
+          DEBIAN_FRONTEND=noninteractive apt install -y curl ca-certificates git
+      - uses: actions/checkout@v3
+      - name: Mark repo as safe directory
+        run: git config --global --add safe.directory /__w/ubuntu-proxy-manager/ubuntu-proxy-manager
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Get version of golanci-lint to use
+        id: cilint-version-fetch
+        # This handles "require foo version" and "require (\nfoo version\n)"" formats
+        run: echo "version=$(grep golangci-lint tools/go.mod | rev | cut -f1 -d' ' | rev)" >> $GITHUB_OUTPUT
+      - name: Code formatting, vet, static checker Security…
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: ${{ steps.cilint-version-fetch.outputs.version }}
+          args: "--config .golangci-ci.yaml"
+      - name: Module files are up to date
+        run: |
+          set -eu
+
+          go mod tidy
+          MODIFIED=`git status --porcelain go.sum go.mod`
+          if [ -n "$MODIFIED" ]; then
+              echo "ERROR: go module files aren't up to date:"
+              git --no-pager diff go.mod go.sum
+              exit 1
+          fi
+        if: ${{ always() }}
+      - name: Building
+        run: go build ./...
+        if: ${{ always() }}
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Run tests
+        run: go test -coverpkg=./... -coverprofile=/tmp/coverage.out -covermode=count ./...
+      - name: Run tests (with race detector)
+        run: |
+          go test -race ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: /tmp/coverage.out
