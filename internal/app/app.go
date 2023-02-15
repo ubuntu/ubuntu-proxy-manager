@@ -12,6 +12,7 @@ import (
 	"github.com/godbus/dbus/v5/introspect"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubuntu/decorate"
+	"github.com/ubuntu/ubuntu-proxy-manager/internal/authorizer"
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/proxy"
 )
 
@@ -23,15 +24,18 @@ var (
 const (
 	dbusObjectPath = "/com/ubuntu/ProxyManager"
 	dbusInterface  = "com.ubuntu.ProxyManager"
+
+	polkitApplyAction = "com.ubuntu.ProxyManager.apply"
 )
 
 const timeout = 1 * time.Second
 
 // proxyManagerBus is the object exported to the D-Bus interface.
 type proxyManagerBus struct {
-	ctx     context.Context
-	cancel  context.CancelCauseFunc
-	running bool
+	ctx        context.Context
+	cancel     context.CancelCauseFunc
+	running    bool
+	authorizer authorizerer
 
 	mu sync.Mutex
 }
@@ -41,21 +45,35 @@ type App struct {
 	busObject *proxyManagerBus
 }
 
+type options struct {
+	authorizer authorizerer
+}
+type option func(*options)
+
+type authorizerer interface {
+	IsSenderAllowed(context.Context, string, dbus.Sender) error
+}
+
 // Apply is a function called via D-Bus to apply the system proxy settings.
-func (b *proxyManagerBus) Apply(http, https, ftp, socks, no, mode string) *dbus.Error {
+func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no, mode string) *dbus.Error {
 	// Methods calls spin up separate goroutines, so ensure we don't run them in parallel
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	b.running = true
+	log.Debugf("Sender %s called Apply(%q, %q, %q, %q, %q, %q)", sender, http, https, ftp, socks, no, mode)
 
-	log.Infof("Called Apply(%s, %s, %s, %s, %s, %s)", http, https, ftp, socks, no, mode)
-
-	p, err := proxy.New(b.ctx, http, https, ftp, socks, no, mode)
 	// We need to cancel the context in a deferred function to get the final
 	// state of the error variable, and to let the main thread know it's safe to quit.
+	var err error
 	defer func() { b.running = false; b.cancel(err) }()
+	b.running = true
 
+	// Check if the caller is authorized to call this method
+	if err = b.authorizer.IsSenderAllowed(b.ctx, polkitApplyAction, sender); err != nil {
+		return dbus.MakeFailedError(err)
+	}
+
+	p, err := proxy.New(b.ctx, http, https, ftp, socks, no, mode)
 	if err != nil {
 		return dbus.MakeFailedError(err)
 	}
@@ -68,14 +86,8 @@ func (b *proxyManagerBus) Apply(http, https, ftp, socks, no, mode string) *dbus.
 }
 
 // New creates a new App object.
-func New(ctx context.Context) (a *App, err error) {
+func New(ctx context.Context, args ...option) (a *App, err error) {
 	defer decorate.OnError(&err, "cannot initialize application")
-
-	ctx, cancel := context.WithCancelCause(ctx)
-	obj := proxyManagerBus{
-		ctx:    ctx,
-		cancel: cancel,
-	}
 
 	// Don't call dbus.SystemBus which caches globally system dbus (issues in tests)
 	// Add interceptor to log dbus messages at debug level
@@ -86,6 +98,23 @@ func New(ctx context.Context) (a *App, err error) {
 		}))
 	if err != nil {
 		return nil, err
+	}
+
+	// Set default options
+	opts := options{
+		authorizer: authorizer.New(conn),
+	}
+
+	// Apply given options
+	for _, f := range args {
+		f(&opts)
+	}
+
+	ctx, cancel := context.WithCancelCause(ctx)
+	obj := proxyManagerBus{
+		ctx:        ctx,
+		cancel:     cancel,
+		authorizer: opts.authorizer,
 	}
 
 	if err = conn.Export(&obj, dbusObjectPath, dbusInterface); err != nil {
