@@ -59,7 +59,11 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Run tests
-        run: go test -coverpkg=./... -coverprofile=/tmp/coverage.out -covermode=count ./...
+        run: |
+          go test -coverpkg=./... -coverprofile=/tmp/coverage.tmp -covermode=count ./...
+
+          # Exclude unwanted files from coverage report
+          grep -hv -e "testutils" /tmp/coverage.tmp > /tmp/coverage.out
       - name: Run tests (with race detector)
         run: |
           go test -race ./...
