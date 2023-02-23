@@ -45,11 +45,14 @@ func TestWait(t *testing.T) {
 	tests := map[string]struct {
 		applyArgs    []string
 		noMethodCall bool
+		rejectAuth   bool
 
 		wantErr bool
 	}{
 		"Cleanly exit on correct apply arguments": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}},
 		"Timeout when no method is called on app": {noMethodCall: true},
+
+		"Error if polkit auth is rejected": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
 	}
 
 	for name, tc := range tests {
@@ -64,7 +67,7 @@ func TestWait(t *testing.T) {
 			}
 
 			ctx := context.WithValue(context.Background(), proxy.DryRun, true)
-			a, err := app.New(ctx)
+			a, err := app.New(ctx, app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}))
 			require.NoError(t, err, "New should have succeeded but didn't")
 
 			done := make(chan struct{})
@@ -86,6 +89,10 @@ func TestWait(t *testing.T) {
 
 			select {
 			case <-done:
+				if tc.wantErr {
+					require.Error(t, err, "App should have failed but didn't")
+					return
+				}
 				require.NoError(t, err, "App should have succeeded but didn't")
 			case <-time.After(5 * time.Second):
 				t.Fatal("App hasn't exited quickly enough")
