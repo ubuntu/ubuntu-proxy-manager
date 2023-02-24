@@ -3,6 +3,7 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,9 +19,7 @@ type Proxy struct {
 }
 
 type options struct {
-	root          string
-	envConfigPath string
-	aptConfigPath string
+	root string
 }
 type option func(*options)
 
@@ -30,17 +29,15 @@ const (
 	// defaultEnvConfigPath is the relative path to the system environment configuration file.
 	defaultEnvConfigPath = "etc/environment.d/99ubuntu-proxy-manager.conf"
 
-	// defaultAptConfigPath is the relative path to the APT proxy configuration file.
-	defaultAptConfigPath = "etc/apt/apt.conf.d/99ubuntu-proxy-manager"
+	// defaultAPTConfigPath is the relative path to the APT proxy configuration file.
+	defaultAPTConfigPath = "etc/apt/apt.conf.d/99ubuntu-proxy-manager"
 )
 
 // New returns a new instance of a proxy manager.
 func New(ctx context.Context, args ...option) *Proxy {
 	// Set default options
 	opts := options{
-		root:          "/",
-		envConfigPath: defaultEnvConfigPath,
-		aptConfigPath: defaultAptConfigPath,
+		root: "/",
 	}
 	// Apply given options
 	for _, f := range args {
@@ -48,8 +45,8 @@ func New(ctx context.Context, args ...option) *Proxy {
 	}
 
 	return &Proxy{
-		envConfigPath: filepath.Join(opts.root, opts.envConfigPath),
-		aptConfigPath: filepath.Join(opts.root, opts.aptConfigPath),
+		envConfigPath: filepath.Join(opts.root, defaultEnvConfigPath),
+		aptConfigPath: filepath.Join(opts.root, defaultAPTConfigPath),
 	}
 }
 
@@ -67,7 +64,7 @@ func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode stri
 	if err := p.applyToEnvironment(); err != nil {
 		return err
 	}
-	if err := p.applyToApt(); err != nil {
+	if err := p.applyToAPT(); err != nil {
 		return err
 	}
 	return nil
@@ -85,4 +82,31 @@ func previousConfig(path string) (content string, err error) {
 	}
 
 	return string(prevConf), nil
+}
+
+// createParentDirectories creates the parent directory of the given path if it
+// doesn't already exist.
+// It returns an error if the parent directory can't be created.
+func createParentDirectories(path string) error {
+	parentDir := filepath.Dir(path)
+
+	log.Debugf("Creating directory %q", parentDir)
+	// #nosec G301 - parent directory permissions are 0755, so we should keep the same pattern
+	if err := os.MkdirAll(parentDir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+	return nil
+}
+
+// safeWriteFile writes the given contents to path, applying the write to .new and
+// rename workflow.
+func safeWriteFile(path string, contents string) error {
+	// #nosec G306 - config file permissions are 0644, so we should keep the same pattern
+	if err := os.WriteFile(path+".new", []byte(contents), 0644); err != nil {
+		return err
+	}
+	if err := os.Rename(path+".new", path); err != nil {
+		return err
+	}
+	return nil
 }
