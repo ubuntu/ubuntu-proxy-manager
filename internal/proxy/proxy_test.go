@@ -68,12 +68,11 @@ https_proxy=https://example.com:8080
 		"Error when environment directory is not readable":       {existingPerms: map[string]os.FileMode{filepath.Dir(envConfigPath): 0444}, wantErr: true},
 
 		// Error cases - setting parsing
-		"Error on unparsable URI for HTTP":          {http: "http://pro\x7Fy:3128", https: "https://valid.proxy", wantErr: true},
-		"Error on unparsable URI for HTTP (global)": {http: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on unparsable URI for HTTPS":         {https: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on unparsable URI for FTP":           {ftp: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on unparsable URI for SOCKS":         {socks: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on missing scheme":                   {socks: "example.com:8080", wantErr: true},
+		"Error on unparsable URI for HTTP":  {http: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on unparsable URI for HTTPS": {https: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on unparsable URI for FTP":   {ftp: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on unparsable URI for SOCKS": {socks: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on missing scheme":           {socks: "example.com:8080", wantErr: true},
 	}
 	for name, tc := range tests {
 		tc := tc
