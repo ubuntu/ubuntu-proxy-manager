@@ -111,10 +111,8 @@ https_proxy=https://example.com:8080
 				ctx = context.WithValue(ctx, proxy.DryRun, true)
 			}
 
-			p, err := proxy.New(ctx, proxy.WithRoot(root))
-			require.NoError(t, err, "Setup: New failed but shouldn't have")
-
-			err = p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
+			p := proxy.New(ctx, proxy.WithRoot(root))
+			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
 			if tc.wantErr {
 				require.Error(t, err, "Apply should have failed but didn't")
 				return
