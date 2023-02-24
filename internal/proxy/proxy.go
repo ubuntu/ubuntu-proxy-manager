@@ -16,10 +16,6 @@ type Proxy struct {
 	envConfigPath string
 }
 
-// DryRun is a context key to indicate that we should not apply the proxy
-// settings. It is intended to be used in tests only.
-var DryRun = struct{}{}
-
 type options struct {
 	root          string
 	envConfigPath string
@@ -54,10 +50,6 @@ func New(ctx context.Context, args ...option) *Proxy {
 func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode string) (err error) {
 	defer decorate.OnError(&err, "couldn't apply proxy configuration")
 
-	if ctx.Value(DryRun) == true {
-		log.Infof("Skipping proxy application in dry-run mode")
-		return nil
-	}
 	log.Infof("Applying proxy configuration")
 
 	p.settings, err = newSettings(http, https, ftp, socks, no)

@@ -31,7 +31,6 @@ func TestApply(t *testing.T) {
 		existingDirs  []string
 		existingPerms map[string]os.FileMode
 		prevContents  map[string]string
-		dryRun        bool
 
 		wantUnchangedFiles []string
 		wantErr            bool
@@ -63,8 +62,6 @@ https_proxy=https://example.com:8080
 		"Domain username without password is escaped":  {http: `http://EXAMPLE\bobsmith@example.com:8080`},
 		"Escaped domain username is not escaped again": {http: `http://EXAMPLE%5Cbobsmith@example.com:8080`},
 		"Options are applied on read-only env file":    {http: "http://example.com:8080", existingPerms: map[string]os.FileMode{envConfigPath: 0444}, prevContents: map[string]string{envConfigPath: "something"}},
-
-		"Proxy files not created when ran with dry-run": {dryRun: true},
 
 		// Error cases - apply
 		"Error when we can't write to the environment directory": {existingDirs: []string{"etc/"}, prevContents: map[string]string{filepath.Dir(envConfigPath): "something"}, wantErr: true},
@@ -107,10 +104,6 @@ https_proxy=https://example.com:8080
 			}
 
 			ctx := context.Background()
-			if tc.dryRun {
-				ctx = context.WithValue(ctx, proxy.DryRun, true)
-			}
-
 			p := proxy.New(ctx, proxy.WithRoot(root))
 			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
 			if tc.wantErr {

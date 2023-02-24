@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/app"
-	"github.com/ubuntu/ubuntu-proxy-manager/internal/proxy"
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/testutils"
 )
 
@@ -68,8 +67,7 @@ func TestWait(t *testing.T) {
 				args[i] = tc.applyArgs[i]
 			}
 
-			ctx := context.WithValue(context.Background(), proxy.DryRun, true)
-			a, err := app.New(ctx, app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
+			a, err := app.New(context.Background(), app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
 			require.NoError(t, err, "New should have succeeded but didn't")
 
 			done := make(chan struct{})
@@ -115,8 +113,7 @@ func TestAppAlreadyExported(t *testing.T) {
 func TestQuitApp(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
-	ctx := context.WithValue(context.Background(), proxy.DryRun, true)
-	a, err := app.New(ctx)
+	a, err := app.New(context.Background())
 	require.NoError(t, err, "New should have succeeded but didn't")
 	var appErr error
 	done := make(chan struct{})
