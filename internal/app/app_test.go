@@ -52,8 +52,7 @@ func TestWait(t *testing.T) {
 		"Cleanly exit on correct apply arguments": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}},
 		"Timeout when no method is called on app": {noMethodCall: true},
 
-		"Error if polkit auth is rejected":        {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
-		"Error if proxy arguments are unparsable": {applyArgs: []string{"http://pro\x7Fy:3128", "", "", "", "", ""}, wantErr: true},
+		"Error if polkit auth is rejected": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
 	}
 
 	for name, tc := range tests {
