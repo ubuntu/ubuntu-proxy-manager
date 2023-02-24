@@ -9,3 +9,4 @@ func WithRoot(path string) func(o *options) {
 
 const ConfHeader = confHeader
 const DefaultEnvConfigPath = defaultEnvConfigPath
+const DefaultAptConfigPath = defaultAptConfigPath

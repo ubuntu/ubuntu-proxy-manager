@@ -24,6 +24,7 @@ func (p setting) envString() string {
 // applyToEnvironment applies the proxy configuration in the form of
 // environment variables set in /etc/environment.d.
 // If there are no proxy settings to apply, the environment file is removed.
+// nolint:dupl // Apply logic is similar to applyToApt
 func (p Proxy) applyToEnvironment() (err error) {
 	defer decorate.OnError(&err, "couldn't apply environment proxy configuration")
 
