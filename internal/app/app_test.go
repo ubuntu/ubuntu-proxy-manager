@@ -43,16 +43,18 @@ func TestNew(t *testing.T) {
 
 func TestWait(t *testing.T) {
 	tests := map[string]struct {
-		applyArgs    []string
-		noMethodCall bool
-		rejectAuth   bool
+		applyArgs       []string
+		noMethodCall    bool
+		rejectAuth      bool
+		proxyApplyError bool
 
 		wantErr bool
 	}{
 		"Cleanly exit on correct apply arguments": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}},
 		"Timeout when no method is called on app": {noMethodCall: true},
 
-		"Error if polkit auth is rejected": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
+		"Error if polkit auth is rejected":         {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
+		"Error when applying proxy settings fails": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, proxyApplyError: true, wantErr: true},
 	}
 
 	for name, tc := range tests {
@@ -67,7 +69,7 @@ func TestWait(t *testing.T) {
 			}
 
 			ctx := context.WithValue(context.Background(), proxy.DryRun, true)
-			a, err := app.New(ctx, app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}))
+			a, err := app.New(ctx, app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
 			require.NoError(t, err, "New should have succeeded but didn't")
 
 			done := make(chan struct{})

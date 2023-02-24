@@ -36,7 +36,7 @@ type proxyManagerBus struct {
 	cancel     context.CancelCauseFunc
 	running    bool
 	authorizer authorizerer
-	proxy      *proxy.Proxy
+	proxy      proxyApplier
 
 	mu sync.Mutex
 }
@@ -48,11 +48,15 @@ type App struct {
 
 type options struct {
 	authorizer authorizerer
+	proxy      proxyApplier
 }
 type option func(*options)
 
 type authorizerer interface {
 	IsSenderAllowed(context.Context, string, dbus.Sender) error
+}
+type proxyApplier interface {
+	Apply(context.Context, string, string, string, string, string, string) error
 }
 
 // Apply is a function called via D-Bus to apply the system proxy settings.
@@ -96,9 +100,11 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancelCause(ctx)
 	// Set default options
 	opts := options{
 		authorizer: authorizer.New(conn),
+		proxy:      proxy.New(ctx),
 	}
 
 	// Apply given options
@@ -106,12 +112,11 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 		f(&opts)
 	}
 
-	ctx, cancel := context.WithCancelCause(ctx)
 	obj := proxyManagerBus{
 		ctx:        ctx,
 		cancel:     cancel,
 		authorizer: opts.authorizer,
-		proxy:      proxy.New(ctx),
+		proxy:      opts.proxy,
 	}
 
 	if err = conn.Export(&obj, dbusObjectPath, dbusInterface); err != nil {
