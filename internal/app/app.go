@@ -36,6 +36,7 @@ type proxyManagerBus struct {
 	cancel     context.CancelCauseFunc
 	running    bool
 	authorizer authorizerer
+	proxy      *proxy.Proxy
 
 	mu sync.Mutex
 }
@@ -73,8 +74,7 @@ func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no,
 		return dbus.MakeFailedError(err)
 	}
 
-	p := proxy.New(b.ctx)
-	err = p.Apply(b.ctx, http, https, ftp, socks, no, mode)
+	err = b.proxy.Apply(b.ctx, http, https, ftp, socks, no, mode)
 	if err != nil {
 		return dbus.MakeFailedError(err)
 	}
@@ -111,6 +111,7 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 		ctx:        ctx,
 		cancel:     cancel,
 		authorizer: opts.authorizer,
+		proxy:      proxy.New(ctx),
 	}
 
 	if err = conn.Export(&obj, dbusObjectPath, dbusInterface); err != nil {
