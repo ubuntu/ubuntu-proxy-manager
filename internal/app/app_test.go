@@ -68,7 +68,7 @@ func TestWait(t *testing.T) {
 			}
 
 			a, err := app.New(context.Background(), app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
-			require.NoError(t, err, "New should have succeeded but didn't")
+			require.NoError(t, err, "Setup: New should have succeeded but didn't")
 
 			done := make(chan struct{})
 			go func() {
@@ -105,7 +105,7 @@ func TestAppAlreadyExported(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
 	_, err := app.New(context.Background())
-	require.NoError(t, err, "New should have succeeded but didn't")
+	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 	_, err = app.New(context.Background())
 	require.ErrorContains(t, err, "D-Bus name already taken")
 }
@@ -114,7 +114,7 @@ func TestQuitApp(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
 	a, err := app.New(context.Background())
-	require.NoError(t, err, "New should have succeeded but didn't")
+	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 	var appErr error
 	done := make(chan struct{})
 	go func() {
