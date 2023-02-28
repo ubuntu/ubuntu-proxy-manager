@@ -78,8 +78,7 @@ func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no,
 		return dbus.MakeFailedError(err)
 	}
 
-	err = b.proxy.Apply(b.ctx, http, https, ftp, socks, no, mode)
-	if err != nil {
+	if err = b.proxy.Apply(b.ctx, http, https, ftp, socks, no, mode); err != nil {
 		return dbus.MakeFailedError(err)
 	}
 	return nil
