@@ -14,6 +14,9 @@ import (
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/testutils"
 )
 
+// fileIsDirMsg is a placeholder message for when we create files instead of directories to trigger specific errors.
+var fileIsDirMsg = "this should have been a directory\n"
+
 func TestApply(t *testing.T) {
 	t.Parallel()
 
@@ -33,6 +36,7 @@ func TestApply(t *testing.T) {
 		existingDirs  []string
 		existingPerms map[string]os.FileMode
 		prevContents  map[string]string
+		compareTrees  bool
 
 		wantUnchangedFiles []string
 		wantErr            bool
@@ -86,10 +90,11 @@ http_proxy=http://example.com:8080
 		},
 
 		// Error cases - apply
-		"Error when we can't write to the environment directory": {existingDirs: []string{"etc/"}, prevContents: map[string]string{filepath.Dir(envConfigPath): "something"}, wantErr: true},
-		"Error when we can't write to the APT config directory":  {existingDirs: []string{"etc/apt"}, prevContents: map[string]string{filepath.Dir(aptConfigPath): "something"}, wantErr: true},
-		"Error when environment directory is not readable":       {existingPerms: map[string]os.FileMode{filepath.Dir(envConfigPath): 0444}, wantErr: true},
-		"Error when APT config directory is not readable":        {existingPerms: map[string]os.FileMode{filepath.Dir(aptConfigPath): 0444}, wantErr: true},
+		"Error when we cannot write to the environment directory": {http: "http://example.com:8080", existingDirs: []string{"etc/"}, prevContents: map[string]string{filepath.Dir(envConfigPath): fileIsDirMsg}, compareTrees: true, wantErr: true},
+		"Error when we cannot write to the APT config directory":  {http: "http://example.com:8080", existingDirs: []string{"etc/apt"}, prevContents: map[string]string{filepath.Dir(aptConfigPath): fileIsDirMsg}, compareTrees: true, wantErr: true},
+		"Error when all directories are unwritable":               {http: "http://example.com:8080", existingDirs: []string{"etc/apt"}, prevContents: map[string]string{filepath.Dir(envConfigPath): fileIsDirMsg, filepath.Dir(aptConfigPath): fileIsDirMsg}, compareTrees: true, wantErr: true},
+		"Error when environment directory is not readable":        {existingPerms: map[string]os.FileMode{filepath.Dir(envConfigPath): 0444}, wantErr: true},
+		"Error when APT config directory is not readable":         {existingPerms: map[string]os.FileMode{filepath.Dir(aptConfigPath): 0444}, wantErr: true},
 
 		// Error cases - setting parsing
 		"Error on unparsable URI for HTTP":  {http: "http://pro\x7Fy:3128", wantErr: true},
@@ -129,11 +134,16 @@ http_proxy=http://example.com:8080
 			ctx := context.Background()
 			p := proxy.New(ctx, proxy.WithRoot(root))
 			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
+
 			if tc.wantErr {
 				require.Error(t, err, "Apply should have failed but didn't")
-				return
+				// For some tests it adds value to compare directory trees (e.g. partial errors)
+				if !tc.compareTrees {
+					return
+				}
+			} else {
+				require.NoError(t, err, "Apply failed but shouldn't have")
 			}
-			require.NoError(t, err, "Apply failed but shouldn't have")
 
 			testutils.CompareTreesWithFiltering(t, root, testutils.GoldenPath(t), testutils.Update())
 			for _, file := range tc.wantUnchangedFiles {
