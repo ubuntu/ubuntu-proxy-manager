@@ -14,48 +14,6 @@ import (
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/testutils"
 )
 
-func TestNew(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		http    string
-		https   string
-		ftp     string
-		socks   string
-		noProxy string
-		mode    string
-
-		wantErr bool
-	}{
-		"No options set":   {},
-		"HTTP option set":  {http: "http://example.com:8080"},
-		"Some options set": {http: "http://example.com:8080", https: "https://example.com:8080"},
-		"All options set":  {http: "http://example.com:8080", https: "https://example.com:8080", ftp: "ftp://example.com:8080", socks: "socks://example.com:8080", noProxy: "localhost,127.0.0.1", mode: "auto"},
-
-		// Error cases
-		"Error on unparsable URI for HTTP":          {http: "http://pro\x7Fy:3128", https: "https://valid.proxy", wantErr: true},
-		"Error on unparsable URI for HTTP (global)": {http: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on unparsable URI for HTTPS":         {https: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on unparsable URI for FTP":           {ftp: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on unparsable URI for SOCKS":         {socks: "http://pro\x7Fy:3128", wantErr: true},
-		"Error on missing scheme":                   {socks: "example.com:8080", wantErr: true},
-	}
-	for name, tc := range tests {
-		tc := tc
-		name := name
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			_, err := proxy.New(context.Background(), tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
-			if tc.wantErr {
-				require.Error(t, err, "New should have failed but didn't")
-				return
-			}
-			require.NoError(t, err, "New failed but shouldn't have")
-		})
-	}
-}
-
 func TestApply(t *testing.T) {
 	t.Parallel()
 
@@ -73,7 +31,6 @@ func TestApply(t *testing.T) {
 		existingDirs  []string
 		existingPerms map[string]os.FileMode
 		prevContents  map[string]string
-		dryRun        bool
 
 		wantUnchangedFiles []string
 		wantErr            bool
@@ -106,11 +63,16 @@ https_proxy=https://example.com:8080
 		"Escaped domain username is not escaped again": {http: `http://EXAMPLE%5Cbobsmith@example.com:8080`},
 		"Options are applied on read-only env file":    {http: "http://example.com:8080", existingPerms: map[string]os.FileMode{envConfigPath: 0444}, prevContents: map[string]string{envConfigPath: "something"}},
 
-		"Proxy files not created when ran with dry-run": {dryRun: true},
-
-		// Error cases
+		// Error cases - apply
 		"Error when we can't write to the environment directory": {existingDirs: []string{"etc/"}, prevContents: map[string]string{filepath.Dir(envConfigPath): "something"}, wantErr: true},
 		"Error when environment directory is not readable":       {existingPerms: map[string]os.FileMode{filepath.Dir(envConfigPath): 0444}, wantErr: true},
+
+		// Error cases - setting parsing
+		"Error on unparsable URI for HTTP":  {http: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on unparsable URI for HTTPS": {https: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on unparsable URI for FTP":   {ftp: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on unparsable URI for SOCKS": {socks: "http://pro\x7Fy:3128", wantErr: true},
+		"Error on missing scheme":           {socks: "example.com:8080", wantErr: true},
 	}
 	for name, tc := range tests {
 		tc := tc
@@ -141,14 +103,8 @@ https_proxy=https://example.com:8080
 			}
 
 			ctx := context.Background()
-			if tc.dryRun {
-				ctx = context.WithValue(ctx, proxy.DryRun, true)
-			}
-
-			p, err := proxy.New(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode, proxy.WithRoot(root))
-			require.NoError(t, err, "Setup: New failed but shouldn't have")
-
-			err = p.Apply(ctx)
+			p := proxy.New(ctx, proxy.WithRoot(root))
+			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
 			if tc.wantErr {
 				require.Error(t, err, "Apply should have failed but didn't")
 				return

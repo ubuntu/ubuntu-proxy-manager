@@ -16,10 +16,6 @@ type Proxy struct {
 	envConfigPath string
 }
 
-// DryRun is a context key to indicate that we should not apply the proxy
-// settings. It is intended to be used in tests only.
-var DryRun = struct{}{}
-
 type options struct {
 	root          string
 	envConfigPath string
@@ -34,9 +30,7 @@ const (
 )
 
 // New returns a new instance of a proxy manager.
-func New(ctx context.Context, http, https, ftp, socks, no, mode string, args ...option) (p *Proxy, err error) {
-	defer decorate.OnError(&err, "couldn't create proxy manager")
-
+func New(ctx context.Context, args ...option) *Proxy {
 	// Set default options
 	opts := options{
 		root:          "/",
@@ -47,24 +41,21 @@ func New(ctx context.Context, http, https, ftp, socks, no, mode string, args ...
 		f(&opts)
 	}
 
-	settings, err := newSettings(http, https, ftp, socks, no)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Proxy{
-		settings:      settings,
 		envConfigPath: filepath.Join(opts.root, opts.envConfigPath),
-	}, nil
+	}
 }
 
 // Apply applies the proxy configuration to the system.
-func (p Proxy) Apply(ctx context.Context) error {
-	if ctx.Value(DryRun) == true {
-		log.Infof("Skipping proxy application in dry-run mode")
-		return nil
-	}
+func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode string) (err error) {
+	defer decorate.OnError(&err, "couldn't apply proxy configuration")
+
 	log.Infof("Applying proxy configuration")
+
+	p.settings, err = newSettings(http, https, ftp, socks, no)
+	if err != nil {
+		return err
+	}
 
 	return p.applyToEnvironment()
 }

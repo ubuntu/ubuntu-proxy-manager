@@ -6,24 +6,28 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+// WithAuthority overrides the default authority implementation.
 func WithAuthority(c caller) func(*options) {
 	return func(o *options) {
 		o.authority = c
 	}
 }
 
+// WithCredLookup overrides the default credentials lookup implementation.
 func WithCredLookup(c caller) func(*options) {
 	return func(o *options) {
 		o.credLookup = c
 	}
 }
 
+// WithRoot overrides the filesystem root for the authorizer.
 func WithRoot(root string) func(*options) {
 	return func(o *options) {
 		o.root = root
 	}
 }
 
+// PolkitObjMock is a mock for the polkit object.
 type PolkitObjMock struct {
 	IsAuthorized    bool
 	WantPolkitError bool
@@ -31,6 +35,7 @@ type PolkitObjMock struct {
 	actionRequested string
 }
 
+// Call mocks the polkit object call.
 func (d *PolkitObjMock) Call(method string, flags dbus.Flags, args ...interface{}) *dbus.Call {
 	var errPolkit error
 
@@ -60,12 +65,14 @@ func (d *PolkitObjMock) Call(method string, flags dbus.Flags, args ...interface{
 	}
 }
 
+// CredsObjMock is a mock for the credentials object.
 type CredsObjMock struct {
 	UID             any
 	PID             any
 	WantLookupError bool
 }
 
+// Call mocks the credentials object call.
 func (d *CredsObjMock) Call(method string, flags dbus.Flags, args ...interface{}) *dbus.Call {
 	var errCredsLookup error
 

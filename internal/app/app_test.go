@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/app"
-	"github.com/ubuntu/ubuntu-proxy-manager/internal/proxy"
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/testutils"
 )
 
@@ -43,17 +42,18 @@ func TestNew(t *testing.T) {
 
 func TestWait(t *testing.T) {
 	tests := map[string]struct {
-		applyArgs    []string
-		noMethodCall bool
-		rejectAuth   bool
+		applyArgs       []string
+		noMethodCall    bool
+		rejectAuth      bool
+		proxyApplyError bool
 
 		wantErr bool
 	}{
 		"Cleanly exit on correct apply arguments": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}},
 		"Timeout when no method is called on app": {noMethodCall: true},
 
-		"Error if polkit auth is rejected":        {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
-		"Error if proxy arguments are unparsable": {applyArgs: []string{"http://pro\x7Fy:3128", "", "", "", "", ""}, wantErr: true},
+		"Error if polkit auth is rejected":         {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, rejectAuth: true, wantErr: true},
+		"Error when applying proxy settings fails": {applyArgs: []string{"http://proxy:3128", "", "", "", "", ""}, proxyApplyError: true, wantErr: true},
 	}
 
 	for name, tc := range tests {
@@ -67,9 +67,8 @@ func TestWait(t *testing.T) {
 				args[i] = tc.applyArgs[i]
 			}
 
-			ctx := context.WithValue(context.Background(), proxy.DryRun, true)
-			a, err := app.New(ctx, app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}))
-			require.NoError(t, err, "New should have succeeded but didn't")
+			a, err := app.New(context.Background(), app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
+			require.NoError(t, err, "Setup: New should have succeeded but didn't")
 
 			done := make(chan struct{})
 			go func() {
@@ -106,7 +105,7 @@ func TestAppAlreadyExported(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
 	_, err := app.New(context.Background())
-	require.NoError(t, err, "New should have succeeded but didn't")
+	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 	_, err = app.New(context.Background())
 	require.ErrorContains(t, err, "D-Bus name already taken")
 }
@@ -114,9 +113,8 @@ func TestAppAlreadyExported(t *testing.T) {
 func TestQuitApp(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
-	ctx := context.WithValue(context.Background(), proxy.DryRun, true)
-	a, err := app.New(ctx)
-	require.NoError(t, err, "New should have succeeded but didn't")
+	a, err := app.New(context.Background())
+	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 	var appErr error
 	done := make(chan struct{})
 	go func() {
