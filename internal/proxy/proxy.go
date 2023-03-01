@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ubuntu/decorate"
+	"golang.org/x/sync/errgroup"
 )
 
 // Proxy represents a proxy manager.
@@ -61,13 +62,11 @@ func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode stri
 		return err
 	}
 
-	if err := p.applyToEnvironment(); err != nil {
-		return err
-	}
-	if err := p.applyToAPT(); err != nil {
-		return err
-	}
-	return nil
+	var g errgroup.Group
+	g.Go(func() error { return p.applyToEnvironment() })
+	g.Go(func() error { return p.applyToAPT() })
+
+	return g.Wait()
 }
 
 // previousConfig returns the previous configuration if it exists. No error is
