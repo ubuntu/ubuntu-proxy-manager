@@ -103,6 +103,7 @@ mode='manual'
 		"Domain username without password is escaped":  {http: `http://EXAMPLE\bobsmith@example.com:8080`},
 		"Escaped domain username is not escaped again": {http: `http://EXAMPLE%5Cbobsmith@example.com:8080`},
 		// applicable to GSettings
+		"Single quotes in username and password are escaped for GSettings":       {http: "http://bob'smith:p@$$'w0rd@example.com:8080"},
 		"Ignored hosts are wrapped in single quotes for GSettings":               {noProxy: "localhost,127.0.0.1,::1"},
 		"Double quoted ignored hosts are changed to single quotes for GSettings": {noProxy: `"localhost","127.0.0.1","::1"`},
 		"Single quoted ignored hosts are not touched for GSettings":              {noProxy: "'localhost','127.0.0.1','::1'"},
