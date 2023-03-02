@@ -3,7 +3,7 @@
 ignore-hosts=['localhost','127.0.0.1']
 
 [org.gnome.system.proxy]
-autoconfig-url='http://example.com:8080'
+autoconfig-url='http://example.com:8080/proxy.pac'
 
 [org.gnome.system.proxy]
 mode='auto'

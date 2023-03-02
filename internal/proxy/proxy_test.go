@@ -92,7 +92,7 @@ mode='manual'
 			wantGlibMockNotRun: true,
 			wantUnchangedFiles: []string{envConfigPath, aptConfigPath, gsettingsConfigPath},
 		},
-		"All options set": {http: "http://example.com:8080", https: "https://example.com:8080", ftp: "ftp://example.com:8080", socks: "socks://example.com:8080", noProxy: "localhost,127.0.0.1"},
+		"All options set": {http: "http://example.com:8080", https: "https://example.com:8080", ftp: "ftp://example.com:8080", socks: "socks://example.com:8080", noProxy: "localhost,127.0.0.1", auto: "http://example.com:8080/proxy.pac"},
 		"All options set and equal, all_proxy is set": {http: "http://example.com:8080", https: "http://example.com:8080", ftp: "http://example.com:8080", socks: "http://example.com:8080"},
 
 		// Authentication / escape use cases

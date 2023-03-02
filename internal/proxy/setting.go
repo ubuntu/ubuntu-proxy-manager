@@ -101,8 +101,8 @@ func newSettings(http, https, ftp, socks, noproxy, auto string) (settings []sett
 func newSetting(proto protocol, uri string) (p setting, err error) {
 	defer decorate.OnError(&err, "couldn't create proxy setting")
 
-	// noProxy is a special case and we don't need to parse it
-	if proto == protocolNo {
+	// Autoconfiguration URLs and noProxy are special cases which we don't need to parse
+	if slices.Contains([]protocol{protocolNo, protocolAuto}, proto) {
 		return setting{protocol: proto, escapedURL: uri}, nil
 	}
 	// Ideally we would've handled this after calling url.Parse, by checking the
