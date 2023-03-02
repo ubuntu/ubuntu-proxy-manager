@@ -30,7 +30,7 @@ func (p setting) envString() string {
 
 	// Return both uppercase and lowercase environment variables for
 	// compatibility with different tools
-	return fmt.Sprintf("%s_PROXY=%s\n%s_proxy=%s\n",
+	return fmt.Sprintf("%s_PROXY=%q\n%s_proxy=%q\n",
 		strings.ToUpper(fmt.Sprint(p.protocol)), value,
 		strings.ToLower(fmt.Sprint(p.protocol)), value)
 }

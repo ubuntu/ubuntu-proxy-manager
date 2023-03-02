@@ -67,10 +67,10 @@ func TestApply(t *testing.T) {
 			http: "http://example.com:8080", https: "https://example.com:8080",
 			prevContents: map[string]string{
 				envConfigPath: fmt.Sprintf(`%s
-HTTP_PROXY=http://example.com:8080
-http_proxy=http://example.com:8080
-HTTPS_PROXY=https://example.com:8080
-https_proxy=https://example.com:8080
+HTTP_PROXY="http://example.com:8080"
+http_proxy="http://example.com:8080"
+HTTPS_PROXY="https://example.com:8080"
+https_proxy="https://example.com:8080"
 `, proxy.ConfHeader),
 				aptConfigPath: fmt.Sprintf(`%s
 Acquire::http::Proxy "http://example.com:8080";
@@ -119,8 +119,8 @@ mode='manual'
 		"HTTP option set, environment file is already up to date": {
 			http: "http://example.com:8080",
 			prevContents: map[string]string{envConfigPath: fmt.Sprintf(`%s
-HTTP_PROXY=http://example.com:8080
-http_proxy=http://example.com:8080
+HTTP_PROXY="http://example.com:8080"
+http_proxy="http://example.com:8080"
 `, proxy.ConfHeader)},
 			wantUnchangedFiles: []string{envConfigPath},
 		},
