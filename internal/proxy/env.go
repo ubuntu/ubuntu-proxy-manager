@@ -22,11 +22,17 @@ func (p setting) envString() string {
 		return ""
 	}
 
+	value := p.escapedURL
+	// Trim unwanted characters for no_proxy
+	if p.protocol == protocolNo {
+		value = strings.NewReplacer(" ", "", "'", "", `"`, "").Replace(value)
+	}
+
 	// Return both uppercase and lowercase environment variables for
 	// compatibility with different tools
 	return fmt.Sprintf("%s_PROXY=%s\n%s_proxy=%s\n",
-		strings.ToUpper(fmt.Sprint(p.protocol)), p.escapedURL,
-		strings.ToLower(fmt.Sprint(p.protocol)), p.escapedURL)
+		strings.ToUpper(fmt.Sprint(p.protocol)), value,
+		strings.ToLower(fmt.Sprint(p.protocol)), value)
 }
 
 // applyToEnvironment applies the proxy configuration in the form of
