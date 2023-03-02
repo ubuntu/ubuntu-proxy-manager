@@ -92,6 +92,12 @@ func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, auto stri
 	return g.Wait()
 }
 
+// noSupportedProtocols returns true if the current list of settings doesn't
+// contain any supported protocols.
+func (p Proxy) noSupportedProtocols(unsupportedProtocols []protocol) bool {
+	return len(validProtocols(p.settings, unsupportedProtocols)) == 0
+}
+
 // previousConfig returns the previous configuration if it exists. No error is
 // returned if the file doesn't exist, but other errors are.
 func previousConfig(path string) (content string, err error) {
@@ -139,4 +145,21 @@ func safeWriteFile(path string, contents string) error {
 		return err
 	}
 	return nil
+}
+
+// validProtocols returns the valid protocols given a list of settings and a
+// list of unsupported protocols, with the caveat that the slices mustn't
+// contain duplicate elements.
+func validProtocols(a []setting, b []protocol) []protocol {
+	mb := make(map[protocol]struct{}, len(b))
+	for _, x := range b {
+		mb[x] = struct{}{}
+	}
+	var diff []protocol
+	for _, x := range a {
+		if _, found := mb[x.protocol]; !found {
+			diff = append(diff, x.protocol)
+		}
+	}
+	return diff
 }

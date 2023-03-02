@@ -11,6 +11,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ubuntu/decorate"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -18,10 +19,17 @@ const (
 	systemProxySchemaID = "org.gnome.system.proxy"
 )
 
+// unsupportedGSettingsProtocols lists the protocols that are not supported by GSettings.
+var unsupportedGSettingsProtocols = []protocol{protocolAll}
+
 // gsettingsString formats a proxy setting to be used in a GSchema override file.
 func (p setting) gsettingsString() string {
-	var section, settings string
+	if slices.Contains(unsupportedGSettingsProtocols, p.protocol) {
+		log.Debugf("Skipping unsupported GSettings proxy setting %q", p.protocol)
+		return ""
+	}
 
+	var section, settings string
 	switch p.protocol {
 	case protocolHTTP, protocolHTTPS, protocolFTP, protocolSOCKS:
 		section = fmt.Sprintf("[%s.%s]", systemProxySchemaID, strings.ToLower(p.protocol.String()))

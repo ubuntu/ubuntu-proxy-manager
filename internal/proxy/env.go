@@ -9,10 +9,19 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ubuntu/decorate"
+	"golang.org/x/exp/slices"
 )
+
+// unsupportedEnvProtocols lists protocols that are not supported by the environment proxy.
+var unsupportedEnvProtocols = []protocol{protocolAuto}
 
 // envString formats a proxy setting to be environment variable compliant.
 func (p setting) envString() string {
+	if slices.Contains(unsupportedEnvProtocols, p.protocol) {
+		log.Debugf("Skipping unsupported environment proxy setting %q", p.protocol)
+		return ""
+	}
+
 	// Return both uppercase and lowercase environment variables for
 	// compatibility with different tools
 	return fmt.Sprintf("%s_PROXY=%s\n%s_proxy=%s\n",
@@ -26,7 +35,7 @@ func (p setting) envString() string {
 func (p Proxy) applyToEnvironment() (err error) {
 	defer decorate.OnError(&err, "couldn't apply environment proxy configuration")
 
-	if len(p.settings) == 0 {
+	if p.noSupportedProtocols(unsupportedEnvProtocols) {
 		log.Debug("No proxy settings to apply, removing environment file if it exists")
 		if err := os.Remove(p.envConfigPath); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err

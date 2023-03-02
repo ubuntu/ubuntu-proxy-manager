@@ -3,4 +3,3 @@ Acquire::http::Proxy "http://example.com:8080";
 Acquire::https::Proxy "http://example.com:8080";
 Acquire::ftp::Proxy "http://example.com:8080";
 Acquire::socks::Proxy "http://example.com:8080";
-Acquire::all::Proxy "http://example.com:8080";

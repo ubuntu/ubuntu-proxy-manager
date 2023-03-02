@@ -142,6 +142,8 @@ mode='manual'
 			https: "http://username:p@$$w0rd@example.com:8080",
 		},
 		"Do not error if glib-compile-schemas is not found": {http: "http://example.com:8080", missingGlibExecutable: true, wantGlibMockNotRun: true},
+		"Auto proxy is skipped by environment":              {auto: "http://example.com:8080/proxy.pac"},
+		"Auto proxy and no proxy are skipped by APT":        {auto: "http://example.com:8080/proxy.pac", noProxy: "localhost,127.0.0.1"},
 
 		// Error cases - apply
 		"Error when we cannot write to the environment directory": {http: "http://example.com:8080", existingDirs: []string{proxy.DefaultGLibSchemaPath, "etc/"}, prevContents: map[string]string{filepath.Dir(envConfigPath): fileIsDirMsg}, compareTrees: true, wantErr: true},

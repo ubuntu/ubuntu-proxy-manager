@@ -15,7 +15,5 @@ port=8080
 host='example.com'
 port=8080
 
-
-
 [org.gnome.system.proxy]
 mode='manual'
