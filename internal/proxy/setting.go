@@ -20,6 +20,7 @@ const (
 	protocolHTTPS
 	protocolFTP
 	protocolSOCKS
+	protocolAuto // autoconfiguration URL
 )
 
 // setting represents a proxy setting to be applied on the system.

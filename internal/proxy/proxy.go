@@ -3,7 +3,9 @@ package proxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -14,13 +16,20 @@ import (
 
 // Proxy represents a proxy manager.
 type Proxy struct {
-	settings      []setting
-	envConfigPath string
-	aptConfigPath string
+	settings []setting
+
+	envConfigPath       string
+	aptConfigPath       string
+	gsettingsConfigPath string
+
+	glibCompileSchemasCmd []string
+	glibSchemasPath       string
 }
 
 type options struct {
 	root string
+
+	glibCompileSchemasCmd []string
 }
 type option func(*options)
 
@@ -32,22 +41,35 @@ const (
 
 	// defaultAPTConfigPath is the relative path to the APT proxy configuration file.
 	defaultAPTConfigPath = "etc/apt/apt.conf.d/99ubuntu-proxy-manager"
+
+	// defaultGLibSchemaPath is the relative path to the default GSettings XML schema directory.
+	defaultGLibSchemaPath = "usr/share/glib-2.0/schemas"
+
+	// gschemaOverrideFile is the basename of the GSettings proxy schema override file.
+	gschemaOverrideFile = "99_ubuntu-proxy-manager.gschema.override"
 )
 
 // New returns a new instance of a proxy manager.
 func New(ctx context.Context, args ...option) *Proxy {
 	// Set default options
 	opts := options{
-		root: "/",
+		root:                  "/",
+		glibCompileSchemasCmd: []string{"glib-compile-schemas"},
 	}
 	// Apply given options
 	for _, f := range args {
 		f(&opts)
 	}
 
+	glibSchemasPath := filepath.Join(opts.root, defaultGLibSchemaPath)
+
 	return &Proxy{
-		envConfigPath: filepath.Join(opts.root, defaultEnvConfigPath),
-		aptConfigPath: filepath.Join(opts.root, defaultAPTConfigPath),
+		envConfigPath:       filepath.Join(opts.root, defaultEnvConfigPath),
+		aptConfigPath:       filepath.Join(opts.root, defaultAPTConfigPath),
+		gsettingsConfigPath: filepath.Join(glibSchemasPath, gschemaOverrideFile),
+
+		glibSchemasPath:       glibSchemasPath,
+		glibCompileSchemasCmd: opts.glibCompileSchemasCmd,
 	}
 }
 
@@ -65,6 +87,7 @@ func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode stri
 	var g errgroup.Group
 	g.Go(func() error { return p.applyToEnvironment() })
 	g.Go(func() error { return p.applyToAPT() })
+	g.Go(func() error { return p.applyToGSettings() })
 
 	return g.Wait()
 }
@@ -98,8 +121,16 @@ func createParentDirectories(path string) error {
 }
 
 // safeWriteFile writes the given contents to path, applying the write to .new and
-// rename workflow.
+// rename workflow. If an empty string is given as content, the file is removed.
 func safeWriteFile(path string, contents string) error {
+	if contents == "" {
+		log.Debugf("Removing file %q", path)
+		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("failed to remove file: %w", err)
+		}
+		return nil
+	}
+
 	// #nosec G306 - config file permissions are 0644, so we should keep the same pattern
 	if err := os.WriteFile(path+".new", []byte(contents), 0644); err != nil {
 		return err

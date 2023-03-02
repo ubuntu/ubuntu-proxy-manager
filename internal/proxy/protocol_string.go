@@ -14,11 +14,12 @@ func _() {
 	_ = x[protocolHTTPS-3]
 	_ = x[protocolFTP-4]
 	_ = x[protocolSOCKS-5]
+	_ = x[protocolAuto-6]
 }
 
-const _protocol_name = "AllNoHTTPHTTPSFTPSOCKS"
+const _protocol_name = "AllNoHTTPHTTPSFTPSOCKSAuto"
 
-var _protocol_index = [...]uint8{0, 3, 5, 9, 14, 17, 22}
+var _protocol_index = [...]uint8{0, 3, 5, 9, 14, 17, 22, 26}
 
 func (i protocol) String() string {
 	if i >= protocol(len(_protocol_index)-1) {
