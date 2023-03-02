@@ -37,7 +37,7 @@ func TestApply(t *testing.T) {
 		ftp     string
 		socks   string
 		noProxy string
-		mode    string
+		auto    string
 
 		existingDirs  []string
 		existingPerms map[string]os.FileMode
@@ -216,7 +216,7 @@ mode='manual'
 
 			ctx := context.Background()
 			p := proxy.New(ctx, proxy.WithRoot(root), proxy.WithGlibCompileSchemasCmd(mockGlibCmd))
-			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
+			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.auto)
 
 			if tc.wantErr {
 				require.Error(t, err, "Apply should have failed but didn't")

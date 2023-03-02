@@ -33,7 +33,7 @@ type setting struct {
 
 // newSettings parses and validates the given proxy settings, returning them in a
 // format ready to be applied on the system.
-func newSettings(http, https, ftp, socks, noproxy string) (settings []setting, err error) {
+func newSettings(http, https, ftp, socks, noproxy, auto string) (settings []setting, err error) {
 	defer decorate.OnError(&err, "couldn't set proxy configuration")
 
 	if http != "" {
@@ -79,6 +79,14 @@ func newSettings(http, https, ftp, socks, noproxy string) (settings []setting, e
 
 	if noproxy != "" {
 		setting, err := newSetting(protocolNo, noproxy)
+		if err != nil {
+			return nil, err
+		}
+		settings = append(settings, setting)
+	}
+
+	if auto != "" {
+		setting, err := newSetting(protocolAuto, auto)
 		if err != nil {
 			return nil, err
 		}

@@ -74,12 +74,12 @@ func New(ctx context.Context, args ...option) *Proxy {
 }
 
 // Apply applies the proxy configuration to the system.
-func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode string) (err error) {
+func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, auto string) (err error) {
 	defer decorate.OnError(&err, "couldn't apply proxy configuration")
 
 	log.Infof("Applying proxy configuration")
 
-	p.settings, err = newSettings(http, https, ftp, socks, no)
+	p.settings, err = newSettings(http, https, ftp, socks, no, auto)
 	if err != nil {
 		return err
 	}

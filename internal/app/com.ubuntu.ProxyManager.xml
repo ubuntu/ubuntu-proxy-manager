@@ -12,7 +12,7 @@
       <arg name="ftp" direction="in" type="s"/>
       <arg name="socks" direction="in" type="s"/>
       <arg name="no_proxy" direction="in" type="s"/>
-      <arg name="mode" direction="in" type="s"/>
+      <arg name="auto" direction="in" type="s"/>
     </method>
   </interface>
   <interface name="org.freedesktop.DBus.Introspectable">

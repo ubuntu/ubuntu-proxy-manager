@@ -60,12 +60,12 @@ type proxyApplier interface {
 }
 
 // Apply is a function called via D-Bus to apply the system proxy settings.
-func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no, mode string) *dbus.Error {
+func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no, auto string) *dbus.Error {
 	// Methods calls spin up separate goroutines, so ensure we don't run them in parallel
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	log.Debugf("Sender %s called Apply(%q, %q, %q, %q, %q, %q)", sender, http, https, ftp, socks, no, mode)
+	log.Debugf("Sender %s called Apply(%q, %q, %q, %q, %q, %q)", sender, http, https, ftp, socks, no, auto)
 
 	// We need to cancel the context in a deferred function to get the final
 	// state of the error variable, and to let the main thread know it's safe to quit.
@@ -78,7 +78,7 @@ func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no,
 		return dbus.MakeFailedError(err)
 	}
 
-	if err = b.proxy.Apply(b.ctx, http, https, ftp, socks, no, mode); err != nil {
+	if err = b.proxy.Apply(b.ctx, http, https, ftp, socks, no, auto); err != nil {
 		return dbus.MakeFailedError(err)
 	}
 	return nil
