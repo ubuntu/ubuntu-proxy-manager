@@ -1,7 +1,6 @@
 package proxy_test
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -217,9 +216,8 @@ mode='manual'
 				mockGlibCmd = []string{"not-an-executable-hopefully"}
 			}
 
-			ctx := context.Background()
-			p := proxy.New(ctx, proxy.WithRoot(root), proxy.WithGlibCompileSchemasCmd(mockGlibCmd))
-			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.auto)
+			p := proxy.New(proxy.WithRoot(root), proxy.WithGlibCompileSchemasCmd(mockGlibCmd))
+			err := p.Apply(tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.auto)
 
 			if tc.wantErr {
 				require.Error(t, err, "Apply should have failed but didn't")

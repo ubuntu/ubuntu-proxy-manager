@@ -1,7 +1,6 @@
 package authorizer_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -65,10 +64,10 @@ func TestIsSenderAllowed(t *testing.T) {
 			)
 
 			if tc.wantErr {
-				require.Error(t, a.IsSenderAllowed(context.Background(), "my-action", "sender"))
+				require.Error(t, a.IsSenderAllowed("my-action", "sender"))
 				return
 			}
-			require.NoError(t, a.IsSenderAllowed(context.Background(), "my-action", "sender"))
+			require.NoError(t, a.IsSenderAllowed("my-action", "sender"))
 		})
 	}
 }

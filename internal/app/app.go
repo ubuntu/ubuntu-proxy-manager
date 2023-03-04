@@ -53,10 +53,10 @@ type options struct {
 type option func(*options)
 
 type authorizerer interface {
-	IsSenderAllowed(context.Context, string, dbus.Sender) error
+	IsSenderAllowed(string, dbus.Sender) error
 }
 type proxyApplier interface {
-	Apply(context.Context, string, string, string, string, string, string) error
+	Apply(string, string, string, string, string, string) error
 }
 
 // Apply is a function called via D-Bus to apply the system proxy settings.
@@ -74,11 +74,11 @@ func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no,
 	b.running = true
 
 	// Check if the caller is authorized to call this method
-	if err = b.authorizer.IsSenderAllowed(b.ctx, polkitApplyAction, sender); err != nil {
+	if err = b.authorizer.IsSenderAllowed(polkitApplyAction, sender); err != nil {
 		return dbus.MakeFailedError(err)
 	}
 
-	if err = b.proxy.Apply(b.ctx, http, https, ftp, socks, no, auto); err != nil {
+	if err = b.proxy.Apply(http, https, ftp, socks, no, auto); err != nil {
 		return dbus.MakeFailedError(err)
 	}
 	return nil
@@ -103,7 +103,7 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 	// Set default options
 	opts := options{
 		authorizer: authorizer.New(conn),
-		proxy:      proxy.New(ctx),
+		proxy:      proxy.New(),
 	}
 
 	// Apply given options

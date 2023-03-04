@@ -3,7 +3,6 @@
 package authorizer
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -90,7 +89,7 @@ func New(bus *dbus.Conn, args ...option) *Authorizer {
 // IsSenderAllowed returns nil if the user is allowed to perform a given operation.
 // Based on the D-Bus sender it will query the user's credentials and then
 // attempt to authorize the action using polkit.
-func (a Authorizer) IsSenderAllowed(ctx context.Context, action string, sender dbus.Sender) (err error) {
+func (a Authorizer) IsSenderAllowed(action string, sender dbus.Sender) (err error) {
 	log.Debugf("Check if sender %s is allowed to perform action %q", sender, action)
 	defer decorate.OnError(&err, "permission denied")
 
@@ -109,11 +108,11 @@ func (a Authorizer) IsSenderAllowed(ctx context.Context, action string, sender d
 		return errors.New("can't get pid from dbus credentials")
 	}
 
-	return a.isAllowed(ctx, action, pid, uid)
+	return a.isAllowed(action, pid, uid)
 }
 
 // isAllowed returns nil if the given uid/pid are allowed to perform the given action.
-func (a Authorizer) isAllowed(ctx context.Context, action string, pid uint32, uid uint32) (err error) {
+func (a Authorizer) isAllowed(action string, pid uint32, uid uint32) (err error) {
 	if uid == 0 {
 		log.Debug("Authorized as being administrator")
 		return nil
@@ -123,7 +122,7 @@ func (a Authorizer) isAllowed(ctx context.Context, action string, pid uint32, ui
 	if err != nil {
 		return fmt.Errorf("couldn't open stat file for process: %w", err)
 	}
-	defer decorate.LogFuncOnErrorContext(ctx, f.Close)
+	defer func() { _ = f.Close() }()
 
 	startTime, err := getStartTimeFromReader(f)
 	if err != nil {
