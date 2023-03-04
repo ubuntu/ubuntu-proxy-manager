@@ -1,7 +1,6 @@
 package proxy_test
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -131,9 +130,8 @@ http_proxy=http://example.com:8080
 				testutils.Chmod(t, filepath.Join(root, file), perms)
 			}
 
-			ctx := context.Background()
-			p := proxy.New(ctx, proxy.WithRoot(root))
-			err := p.Apply(ctx, tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
+			p := proxy.New(proxy.WithRoot(root))
+			err := p.Apply(tc.http, tc.https, tc.ftp, tc.socks, tc.noProxy, tc.mode)
 
 			if tc.wantErr {
 				require.Error(t, err, "Apply should have failed but didn't")
