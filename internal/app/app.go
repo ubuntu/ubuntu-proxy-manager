@@ -32,13 +32,14 @@ const timeout = 1 * time.Second
 
 // proxyManagerBus is the object exported to the D-Bus interface.
 type proxyManagerBus struct {
-	ctx        context.Context
-	cancel     context.CancelCauseFunc
-	running    bool
 	authorizer authorizerer
 	proxy      proxyApplier
 
-	mu sync.Mutex
+	applyCalls    chan applyCall
+	applyResponse chan error
+
+	exited bool
+	exitMu sync.RWMutex
 }
 
 // App is the main application object.
@@ -59,29 +60,49 @@ type proxyApplier interface {
 	Apply(string, string, string, string, string, string) error
 }
 
+type applyCall struct {
+	sender dbus.Sender
+
+	http  string
+	https string
+	ftp   string
+	socks string
+	no    string
+	auto  string
+}
+
 // Apply is a function called via D-Bus to apply the system proxy settings.
 func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no, auto string) *dbus.Error {
-	// Methods calls spin up separate goroutines, so ensure we don't run them in parallel
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	log.Debugf("Sender %s called Apply(%q, %q, %q, %q, %q, %q)", sender, http, https, ftp, socks, no, auto)
-
-	// We need to cancel the context in a deferred function to get the final
-	// state of the error variable, and to let the main thread know it's safe to quit.
-	var err error
-	defer func() { b.running = false; b.cancel(err) }()
-	b.running = true
-
-	// Check if the caller is authorized to call this method
-	if err = b.authorizer.CheckSenderAllowed(polkitApplyAction, sender); err != nil {
-		return dbus.MakeFailedError(err)
+	// Application was already asked to quit, so return an error without applying anything
+	if b.QuitRequested() {
+		return dbus.MakeFailedError(errors.New("application is exiting"))
 	}
 
-	if err = b.proxy.Apply(http, https, ftp, socks, no, auto); err != nil {
+	// Send the request to the main loop
+	b.applyCalls <- applyCall{sender, http, https, ftp, socks, no, auto}
+
+	// Wait for the main loop to process the request
+	if err := <-b.applyResponse; err != nil {
 		return dbus.MakeFailedError(err)
 	}
 	return nil
+}
+
+func (b *proxyManagerBus) apply(args applyCall) error {
+	log.Debugf("Sender %s called Apply: %v", args.sender, args)
+
+	if err := b.authorizer.CheckSenderAllowed(polkitApplyAction, args.sender); err != nil {
+		return err
+	}
+	return b.proxy.Apply(args.http, args.https, args.ftp, args.socks, args.no, args.auto)
+}
+
+// QuitRequested returns true if the application has been requested to quit.
+func (b *proxyManagerBus) QuitRequested() bool {
+	b.exitMu.RLock()
+	defer b.exitMu.RUnlock()
+
+	return b.exited
 }
 
 // New creates a new App object.
@@ -99,7 +120,6 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancelCause(ctx)
 	// Set default options
 	opts := options{
 		authorizer: authorizer.New(conn),
@@ -112,10 +132,10 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 	}
 
 	obj := proxyManagerBus{
-		ctx:        ctx,
-		cancel:     cancel,
-		authorizer: opts.authorizer,
-		proxy:      opts.proxy,
+		authorizer:    opts.authorizer,
+		proxy:         opts.proxy,
+		applyCalls:    make(chan applyCall),
+		applyResponse: make(chan error),
 	}
 
 	if err = conn.Export(&obj, dbusObjectPath, dbusInterface); err != nil {
@@ -151,38 +171,28 @@ func New(ctx context.Context, args ...option) (a *App, err error) {
 	}, nil
 }
 
-// Wait blocks until the context is cancelled or the timeout is reached,
-// returning an error if applicable.
-// As this is a one-shot program, we let the system handle cancelling the dbus connection.
+// Wait blocks until the all operations are done, returning a joined
+// representation of all errors that occurred during the runs.
 func (a *App) Wait() error {
+	var globalErr error
 	for {
 		select {
+		case call := <-a.busObject.applyCalls:
+			err := a.busObject.apply(call)
+			globalErr = errors.Join(globalErr, err)
+			a.busObject.applyResponse <- err
 		case <-time.After(timeout):
-			// Wait for any running apply to finish
-			if a.busObject.running {
-				<-a.busObject.ctx.Done()
-			}
-			return nil
-		case <-a.busObject.ctx.Done():
-			if err := context.Cause(a.busObject.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				return err
-			}
-			return nil // success
+			return globalErr
 		}
 	}
 }
 
-// Quit stops the application, waiting for it to finish if we're in the process
-// of applying the proxy configuration.
+// Quit signals the application to stop, waiting for current operations to finish.
 func (a *App) Quit() {
 	log.Info("Exiting program on user request...")
-	// Wait for the Apply method to finish if applicable
-	if a.busObject.running {
-		log.Warning("An Apply call is running, waiting for it to finish")
-		<-a.busObject.ctx.Done()
-		return
-	}
 
-	// Otherwise just cancel the context
-	a.busObject.cancel(nil)
+	a.busObject.exitMu.Lock()
+	defer a.busObject.exitMu.Unlock()
+
+	a.busObject.exited = true
 }
