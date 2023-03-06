@@ -127,16 +127,8 @@ func createParentDirectories(path string) error {
 }
 
 // safeWriteFile writes the given contents to path, applying the write to .new and
-// rename workflow. If an empty string is given as content, the file is removed.
+// rename workflow.
 func safeWriteFile(path string, contents string) error {
-	if contents == "" {
-		log.Debugf("Removing file %q", path)
-		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return fmt.Errorf("failed to remove file: %w", err)
-		}
-		return nil
-	}
-
 	// #nosec G306 - config file permissions are 0644, so we should keep the same pattern
 	if err := os.WriteFile(path+".new", []byte(contents), 0644); err != nil {
 		return err
@@ -145,6 +137,28 @@ func safeWriteFile(path string, contents string) error {
 		return err
 	}
 	return nil
+}
+
+// backupFileIfExists moves the given file to a backup file suffixed with .old,
+// returning the path to the backup file and a function to restore the original.
+// If the file doesn't exist, no error is returned.
+func backupFileIfExists(path string) (string, func() error, error) {
+	backupPath := path + ".old"
+	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
+		return backupPath, func() error { return nil }, nil
+	}
+
+	log.Debugf("Backing up file %q to %q", path, backupPath)
+
+	err := os.Rename(path, backupPath)
+	if err != nil {
+		return backupPath, func() error { return nil }, err
+	}
+
+	return backupPath, func() error {
+		log.Debugf("Restoring file %q from backup %q", path, backupPath)
+		return os.Rename(backupPath, path)
+	}, nil
 }
 
 // validProtocols returns the valid protocols given a list of settings and a

@@ -112,16 +112,33 @@ func (p Proxy) applyToGSettings() (err error) {
 		return err
 	}
 
-	if err := safeWriteFile(p.gsettingsConfigPath, content); err != nil {
+	backupPath, moveBack, err := backupFileIfExists(p.gsettingsConfigPath)
+	if err != nil {
 		return err
+	}
+
+	if err := safeWriteFile(p.gsettingsConfigPath, content); err != nil {
+		// If we failed to write the configuration to disk, revert to the
+		// previous version of the configuration file.
+		moveBackErr := moveBack()
+		return errors.Join(err, moveBackErr)
 	}
 
 	if err := p.runGlibCompileSchemas(); err != nil {
 		// If we failed to recompile the schemas (due to our fault or not),
 		// revert to the previous version of the configuration file.
-		return errors.Join(err, safeWriteFile(p.gsettingsConfigPath, prevContent))
+		moveBackErr := moveBack()
+		return errors.Join(err, moveBackErr)
 	}
 
+	if _, err := os.Stat(backupPath); err == nil {
+		log.Debugf("Removing backup file at %q", backupPath)
+		return os.Remove(backupPath)
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	// No backup file to remove, we're done.
 	return nil
 }
 
