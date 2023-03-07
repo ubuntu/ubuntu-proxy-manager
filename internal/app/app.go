@@ -53,7 +53,7 @@ type options struct {
 type option func(*options)
 
 type authorizerer interface {
-	IsSenderAllowed(string, dbus.Sender) error
+	CheckSenderAllowed(string, dbus.Sender) error
 }
 type proxyApplier interface {
 	Apply(string, string, string, string, string, string) error
@@ -74,7 +74,7 @@ func (b *proxyManagerBus) Apply(sender dbus.Sender, http, https, ftp, socks, no,
 	b.running = true
 
 	// Check if the caller is authorized to call this method
-	if err = b.authorizer.IsSenderAllowed(polkitApplyAction, sender); err != nil {
+	if err = b.authorizer.CheckSenderAllowed(polkitApplyAction, sender); err != nil {
 		return dbus.MakeFailedError(err)
 	}
 

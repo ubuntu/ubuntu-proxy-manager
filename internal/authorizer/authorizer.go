@@ -86,10 +86,10 @@ func New(bus *dbus.Conn, args ...option) *Authorizer {
 	}
 }
 
-// IsSenderAllowed returns nil if the user is allowed to perform a given operation.
+// CheckSenderAllowed returns nil if the user is allowed to perform a given operation.
 // Based on the D-Bus sender it will query the user's credentials and then
 // attempt to authorize the action using polkit.
-func (a Authorizer) IsSenderAllowed(action string, sender dbus.Sender) (err error) {
+func (a Authorizer) CheckSenderAllowed(action string, sender dbus.Sender) (err error) {
 	log.Debugf("Check if sender %s is allowed to perform action %q", sender, action)
 	defer decorate.OnError(&err, "permission denied")
 

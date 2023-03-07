@@ -8,7 +8,7 @@ import (
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/testutils"
 )
 
-func TestIsSenderAllowed(t *testing.T) {
+func TestCheckSenderAllowed(t *testing.T) {
 	t.Parallel()
 
 	bus := testutils.NewDbusConn(t)
@@ -64,10 +64,10 @@ func TestIsSenderAllowed(t *testing.T) {
 			)
 
 			if tc.wantErr {
-				require.Error(t, a.IsSenderAllowed("my-action", "sender"))
+				require.Error(t, a.CheckSenderAllowed("my-action", "sender"))
 				return
 			}
-			require.NoError(t, a.IsSenderAllowed("my-action", "sender"))
+			require.NoError(t, a.CheckSenderAllowed("my-action", "sender"))
 		})
 	}
 }

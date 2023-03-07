@@ -16,8 +16,8 @@ type MockProxy struct {
 	ApplyError bool
 }
 
-// IsSenderAllowed is a mock implementation of authorizerer, returning an error if requested in the mock.
-func (m *MockAuthorizer) IsSenderAllowed(action string, sender dbus.Sender) (err error) {
+// CheckSenderAllowed is a mock implementation of authorizerer, returning an error if requested in the mock.
+func (m *MockAuthorizer) CheckSenderAllowed(action string, sender dbus.Sender) (err error) {
 	if m.RejectAuth {
 		err = errors.New("authorization rejected")
 	}
