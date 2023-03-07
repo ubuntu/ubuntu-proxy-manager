@@ -9,12 +9,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ubuntu/decorate"
+	"golang.org/x/exp/slices"
 )
+
+// unsupportedAPTProtocols lists the protocols that are not supported by APT.
+var unsupportedAPTProtocols = []protocol{protocolNo, protocolAll, protocolAuto}
 
 // aptString formats a proxy setting to be used in an APT configuration file.
 func (p setting) aptString() string {
-	// no_proxy is not supported by APT, so we ignore it
-	if p.protocol == protocolNo {
+	if slices.Contains(unsupportedAPTProtocols, p.protocol) {
+		log.Debugf("Skipping unsupported APT proxy setting %q", p.protocol)
 		return ""
 	}
 	return fmt.Sprintf("Acquire::%s::Proxy \"%s\";\n", strings.ToLower(p.protocol.String()), p.escapedURL)
@@ -25,7 +29,7 @@ func (p setting) aptString() string {
 func (p Proxy) applyToAPT() (err error) {
 	defer decorate.OnError(&err, "couldn't apply apt proxy configuration")
 
-	if len(p.settings) == 0 {
+	if p.noSupportedProtocols(unsupportedAPTProtocols) {
 		log.Debug("No proxy settings to apply, removing apt proxy config file if it exists")
 		if err := os.Remove(p.aptConfigPath); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err

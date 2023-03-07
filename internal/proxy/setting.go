@@ -20,6 +20,7 @@ const (
 	protocolHTTPS
 	protocolFTP
 	protocolSOCKS
+	protocolAuto // autoconfiguration URL
 )
 
 // setting represents a proxy setting to be applied on the system.
@@ -32,7 +33,7 @@ type setting struct {
 
 // newSettings parses and validates the given proxy settings, returning them in a
 // format ready to be applied on the system.
-func newSettings(http, https, ftp, socks, noproxy string) (settings []setting, err error) {
+func newSettings(http, https, ftp, socks, noproxy, auto string) (settings []setting, err error) {
 	defer decorate.OnError(&err, "couldn't set proxy configuration")
 
 	if http != "" {
@@ -84,6 +85,14 @@ func newSettings(http, https, ftp, socks, noproxy string) (settings []setting, e
 		settings = append(settings, setting)
 	}
 
+	if auto != "" {
+		setting, err := newSetting(protocolAuto, auto)
+		if err != nil {
+			return nil, err
+		}
+		settings = append(settings, setting)
+	}
+
 	return settings, nil
 }
 
@@ -92,8 +101,8 @@ func newSettings(http, https, ftp, socks, noproxy string) (settings []setting, e
 func newSetting(proto protocol, uri string) (p setting, err error) {
 	defer decorate.OnError(&err, "couldn't create proxy setting")
 
-	// noProxy is a special case and we don't need to parse it
-	if proto == protocolNo {
+	// Autoconfiguration URLs and noProxy are special cases which we don't need to parse
+	if slices.Contains([]protocol{protocolNo, protocolAuto}, proto) {
 		return setting{protocol: proto, escapedURL: uri}, nil
 	}
 	// Ideally we would've handled this after calling url.Parse, by checking the

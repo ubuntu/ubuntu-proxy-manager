@@ -62,8 +62,8 @@ jobs:
         run: |
           go test -coverpkg=./... -coverprofile=/tmp/coverage.tmp -covermode=count ./...
 
-          # Exclude unwanted files from coverage report
-          grep -hv -e "testutils" /tmp/coverage.tmp > /tmp/coverage.out
+          # Exclude testutils and generated files from the final coverage report
+          grep -hv -e "testutils" -e "_string\.go" /tmp/coverage.tmp > /tmp/coverage.out
       - name: Run tests (with race detector)
         run: |
           go test -race ./...

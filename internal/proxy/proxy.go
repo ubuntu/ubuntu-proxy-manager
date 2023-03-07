@@ -3,7 +3,9 @@ package proxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -14,13 +16,20 @@ import (
 
 // Proxy represents a proxy manager.
 type Proxy struct {
-	settings      []setting
-	envConfigPath string
-	aptConfigPath string
+	settings []setting
+
+	envConfigPath       string
+	aptConfigPath       string
+	gsettingsConfigPath string
+
+	glibCompileSchemasCmd []string
+	glibSchemasPath       string
 }
 
 type options struct {
 	root string
+
+	glibCompileSchemasCmd []string
 }
 type option func(*options)
 
@@ -32,32 +41,45 @@ const (
 
 	// defaultAPTConfigPath is the relative path to the APT proxy configuration file.
 	defaultAPTConfigPath = "etc/apt/apt.conf.d/99ubuntu-proxy-manager"
+
+	// defaultGLibSchemaPath is the relative path to the default GSettings XML schema directory.
+	defaultGLibSchemaPath = "usr/share/glib-2.0/schemas"
+
+	// gschemaOverrideFile is the basename of the GSettings proxy schema override file.
+	gschemaOverrideFile = "99_ubuntu-proxy-manager.gschema.override"
 )
 
 // New returns a new instance of a proxy manager.
 func New(ctx context.Context, args ...option) *Proxy {
 	// Set default options
 	opts := options{
-		root: "/",
+		root:                  "/",
+		glibCompileSchemasCmd: []string{"glib-compile-schemas"},
 	}
 	// Apply given options
 	for _, f := range args {
 		f(&opts)
 	}
 
+	glibSchemasPath := filepath.Join(opts.root, defaultGLibSchemaPath)
+
 	return &Proxy{
-		envConfigPath: filepath.Join(opts.root, defaultEnvConfigPath),
-		aptConfigPath: filepath.Join(opts.root, defaultAPTConfigPath),
+		envConfigPath:       filepath.Join(opts.root, defaultEnvConfigPath),
+		aptConfigPath:       filepath.Join(opts.root, defaultAPTConfigPath),
+		gsettingsConfigPath: filepath.Join(glibSchemasPath, gschemaOverrideFile),
+
+		glibSchemasPath:       glibSchemasPath,
+		glibCompileSchemasCmd: opts.glibCompileSchemasCmd,
 	}
 }
 
 // Apply applies the proxy configuration to the system.
-func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode string) (err error) {
+func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, auto string) (err error) {
 	defer decorate.OnError(&err, "couldn't apply proxy configuration")
 
 	log.Infof("Applying proxy configuration")
 
-	p.settings, err = newSettings(http, https, ftp, socks, no)
+	p.settings, err = newSettings(http, https, ftp, socks, no, auto)
 	if err != nil {
 		return err
 	}
@@ -65,8 +87,15 @@ func (p Proxy) Apply(ctx context.Context, http, https, ftp, socks, no, mode stri
 	var g errgroup.Group
 	g.Go(func() error { return p.applyToEnvironment() })
 	g.Go(func() error { return p.applyToAPT() })
+	g.Go(func() error { return p.applyToGSettings() })
 
 	return g.Wait()
+}
+
+// noSupportedProtocols returns true if the current list of settings doesn't
+// contain any supported protocols.
+func (p Proxy) noSupportedProtocols(unsupportedProtocols []protocol) bool {
+	return len(validProtocols(p.settings, unsupportedProtocols)) == 0
 }
 
 // previousConfig returns the previous configuration if it exists. No error is
@@ -108,4 +137,43 @@ func safeWriteFile(path string, contents string) error {
 		return err
 	}
 	return nil
+}
+
+// backupFileIfExists moves the given file to a backup file suffixed with .old,
+// returning the path to the backup file and a function to restore the original.
+// If the file doesn't exist, no error is returned.
+func backupFileIfExists(path string) (string, func() error, error) {
+	backupPath := path + ".old"
+	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
+		return backupPath, func() error { return nil }, nil
+	}
+
+	log.Debugf("Backing up file %q to %q", path, backupPath)
+
+	err := os.Rename(path, backupPath)
+	if err != nil {
+		return backupPath, func() error { return nil }, err
+	}
+
+	return backupPath, func() error {
+		log.Debugf("Restoring file %q from backup %q", path, backupPath)
+		return os.Rename(backupPath, path)
+	}, nil
+}
+
+// validProtocols returns the valid protocols given a list of settings and a
+// list of unsupported protocols, with the caveat that the slices mustn't
+// contain duplicate elements.
+func validProtocols(a []setting, b []protocol) []protocol {
+	mb := make(map[protocol]struct{}, len(b))
+	for _, x := range b {
+		mb[x] = struct{}{}
+	}
+	var diff []protocol
+	for _, x := range a {
+		if _, found := mb[x.protocol]; !found {
+			diff = append(diff, x.protocol)
+		}
+	}
+	return diff
 }
