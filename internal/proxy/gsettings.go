@@ -186,7 +186,7 @@ func (p Proxy) runGlibCompileSchemas() error {
 
 // wrapHostIfNeeded wraps the host in single quotes if it is not already wrapped.
 func wrapHostIfNeeded(host string) string {
-	trimmedHost := strings.Trim(host, `'"`)
+	trimmedHost := strings.Trim(host, ` '"`)
 
 	return fmt.Sprintf("'%s'", trimmedHost)
 }

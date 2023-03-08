@@ -106,6 +106,7 @@ mode='manual'
 		"Ignored hosts are wrapped in single quotes for GSettings":               {noProxy: "localhost,127.0.0.1,::1"},
 		"Double quoted ignored hosts are changed to single quotes for GSettings": {noProxy: `"localhost","127.0.0.1","::1"`},
 		"Single quoted ignored hosts are not touched for GSettings":              {noProxy: "'localhost','127.0.0.1','::1'"},
+		"Whitespace in ignored hosts is removed for GSettings":                   {noProxy: "'localhost', '127.0.0.1', '::1'"},
 
 		// Special cases
 		"Options are applied on read-only conf files": {http: "http://example.com:8080",
