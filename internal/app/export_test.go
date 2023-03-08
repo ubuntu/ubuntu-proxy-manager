@@ -1,8 +1,8 @@
 package app
 
 import (
-	"context"
 	"errors"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 )
@@ -14,11 +14,13 @@ type MockAuthorizer struct {
 
 // MockProxy is a mock proxy.
 type MockProxy struct {
-	ApplyError bool
+	ApplyCount   int
+	ApplyError   bool
+	SleepOnApply time.Duration
 }
 
-// IsSenderAllowed is a mock implementation of authorizerer, returning an error if requested in the mock.
-func (m *MockAuthorizer) IsSenderAllowed(ctx context.Context, action string, sender dbus.Sender) (err error) {
+// CheckSenderAllowed is a mock implementation of authorizerer, returning an error if requested in the mock.
+func (m *MockAuthorizer) CheckSenderAllowed(action string, sender dbus.Sender) (err error) {
 	if m.RejectAuth {
 		err = errors.New("authorization rejected")
 	}
@@ -27,7 +29,13 @@ func (m *MockAuthorizer) IsSenderAllowed(ctx context.Context, action string, sen
 }
 
 // Apply is a mock implementation of proxier, returning an error if requested in the mock.
-func (m *MockProxy) Apply(ctx context.Context, _, _, _, _, _, _ string) error {
+func (m *MockProxy) Apply(_, _, _, _, _, _ string) error {
+	m.ApplyCount++
+
+	if m.SleepOnApply > 0 {
+		time.Sleep(m.SleepOnApply)
+	}
+
 	if m.ApplyError {
 		return errors.New("proxy apply error")
 	}

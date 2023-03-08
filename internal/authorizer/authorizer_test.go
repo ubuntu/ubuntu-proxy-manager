@@ -1,7 +1,6 @@
 package authorizer_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,7 +8,7 @@ import (
 	"github.com/ubuntu/ubuntu-proxy-manager/internal/testutils"
 )
 
-func TestIsSenderAllowed(t *testing.T) {
+func TestCheckSenderAllowed(t *testing.T) {
 	t.Parallel()
 
 	bus := testutils.NewDbusConn(t)
@@ -65,10 +64,10 @@ func TestIsSenderAllowed(t *testing.T) {
 			)
 
 			if tc.wantErr {
-				require.Error(t, a.IsSenderAllowed(context.Background(), "my-action", "sender"))
+				require.Error(t, a.CheckSenderAllowed("my-action", "sender"))
 				return
 			}
-			require.NoError(t, a.IsSenderAllowed(context.Background(), "my-action", "sender"))
+			require.NoError(t, a.CheckSenderAllowed("my-action", "sender"))
 		})
 	}
 }

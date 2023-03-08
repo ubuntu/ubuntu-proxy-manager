@@ -1,10 +1,10 @@
 [Unit]
 Description=Ubuntu Proxy Manager service
 
-[Install]
-Alias=dbus-com.ubuntu.ProxyManager
-
 [Service]
 Type=dbus
 BusName=com.ubuntu.ProxyManager
 ExecStart=/usr/libexec/ubuntu-proxy-manager
+
+[Install]
+Alias=dbus-com.ubuntu.ProxyManager
