@@ -1,0 +1,23 @@
+Source: ubuntu-proxy-manager
+Section: misc
+Priority: optional
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-golang,
+               golang-go (>= 2:1.20~),
+               dbus,
+Standards-Version: 4.6.2
+XS-Go-Import-Path: github.com/ubuntu/ubuntu-proxy-manager
+Homepage: https://github.com/ubuntu/ubuntu-proxy-manager
+Description: Ubuntu Proxy Manager service
+ Ubuntu Proxy Manager is a D-Bus mediated service that allows for managing
+ system proxy settings via multiple backends (APT, environment variables and
+ GSettings).
+
+Package: ubuntu-proxy-manager
+Architecture: any
+Built-Using: ${misc:Built-Using},
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Description: ${source:Synopsis}
+ ${source:Extended-Description}
