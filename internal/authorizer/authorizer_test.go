@@ -9,6 +9,8 @@ import (
 )
 
 func TestCheckSenderAllowed(t *testing.T) {
+	t.Cleanup(testutils.StartLocalSystemBus())
+
 	t.Parallel()
 
 	bus := testutils.NewDbusConn(t)
