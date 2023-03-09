@@ -7,4 +7,4 @@ BusName=com.ubuntu.ProxyManager
 ExecStart=/usr/libexec/ubuntu-proxy-manager
 
 [Install]
-Alias=dbus-com.ubuntu.ProxyManager
+Alias=dbus-com.ubuntu.ProxyManager.service
