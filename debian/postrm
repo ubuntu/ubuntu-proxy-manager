@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+# Purge proxy configuration files
+if [ "$1" = purge ] && [ "${DPKG_MAINTSCRIPT_PACKAGE_REFCOUNT:-1}" = 1 ]; then
+    rm -f /etc/environment.d/99ubuntu-proxy-manager.conf
+    rm -f /etc/apt/apt.conf.d/99ubuntu-proxy-manager
+    rm -f /usr/share/glib-2.0/schemas/99_ubuntu-proxy-manager.gschema.override
+
+    if command -v glib-compile-schemas > /dev/null; then
+        glib-compile-schemas /usr/share/glib-2.0/schemas
+    fi
+fi
+
+#DEBHELPER#

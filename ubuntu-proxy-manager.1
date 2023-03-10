@@ -1,0 +1,32 @@
+.TH UBUNTU-PROXY-MANAGER 1 "@DATE@" "ubuntu-proxy-manager @VERSION@" "Ubuntu Proxy Manager"
+.SH NAME
+ubuntu-proxy-manager - Manage Ubuntu system proxy settings
+.SH SYNOPSIS
+\fBubuntu-proxy-manager\fP [\fIoptions\&.\&.\&.\fP]
+.SH DESCRIPTION
+Ubuntu Proxy Manager is a D-Bus mediated service that allows for managing
+system proxy settings via multiple backends (APT, environment variables and
+GSettings).
+
+This program is not intended to be run by hand, rather by a D-Bus activated
+systemd service.
+
+When activated, it will listen for D-Bus calls to set the system proxy
+configuration (APT, environment, GSettings). The program will exit if no D-Bus
+call is received shortly after activation.
+.SH OPTIONS
+.TP
+\fB-d --debug\fP
+enable debug logging
+.TP
+\fB-v --version\fP
+print version and exit
+.TP
+\fB-h --help\fP
+print help message and exit
+.SH COMMANDS
+This program does not take any arguments.
+.SH REPORTING BUGS
+Please report bugs either on the GitHub issue tracker at https://github.com/ubuntu/ubuntu-proxy-manager or login to Launchpad and navigate to https://bugs.launchpad.net/ubuntu/+source/ubuntu-proxy-manager/+filebug
+.SH COPYRIGHT
+(C) Canonical Ltd\&.

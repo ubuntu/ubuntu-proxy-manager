@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE = 1
+
+export GOCACHE := $(shell mktemp -d /tmp/gocache-XXXX)
+export GOFLAGS := -ldflags=-X=github.com/ubuntu/ubuntu-proxy-manager/internal/app.Version=$(shell dpkg-parsechangelog -S Version) --mod=vendor -buildmode=pie
+
+export DEB_BUILD_MAINT_OPTIONS := optimize=-lto
+
+%:
+	dh $@ --buildsystem=golang --with=golang
+
+override_dh_auto_clean:
+	dh_auto_clean
+
+	# Create the vendor directory when building the source package
+	[ -d vendor/ ] || go mod vendor
+
+override_dh_auto_install:
+	dh_auto_install -- --no-source
+
+	# Substitute version and date in manpage
+	sed -i -e "s/@VERSION@/$(shell dpkg-parsechangelog -S Version)/g" -e "s/@DATE@/$(shell date +%F)/g" ubuntu-proxy-manager.1
+
+	# Install in libexec
+	mv debian/ubuntu-proxy-manager/usr/bin debian/ubuntu-proxy-manager/usr/libexec

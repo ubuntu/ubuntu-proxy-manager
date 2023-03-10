@@ -1,0 +1,6 @@
+com.ubuntu.ProxyManager.conf /usr/share/dbus-1/system.d
+com.ubuntu.ProxyManager.xml /usr/share/dbus-1/interfaces
+com.ubuntu.ProxyManager.service /usr/share/dbus-1/system-services
+com.ubuntu.ProxyManager.policy /usr/share/polkit-1/actions
+ubuntu-proxy-manager.service /usr/lib/systemd/system
+ubuntu-proxy-manager.1 /usr/share/man/man1
