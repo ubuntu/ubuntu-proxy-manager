@@ -1,7 +1,6 @@
 package app_test
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -32,7 +31,7 @@ func TestNew(t *testing.T) {
 				defer testutils.StartLocalSystemBus()()
 			}
 
-			_, err := app.New(context.Background())
+			_, err := app.New()
 			if tc.wantErr {
 				require.Error(t, err, "New should have failed but didn't")
 				return
@@ -69,7 +68,7 @@ func TestWait(t *testing.T) {
 				args[i] = tc.applyArgs[i]
 			}
 
-			a, err := app.New(context.Background(), app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
+			a, err := app.New(app.WithAuthorizer(&app.MockAuthorizer{RejectAuth: tc.rejectAuth}), app.WithProxy(&app.MockProxy{ApplyError: tc.proxyApplyError}))
 			require.NoError(t, err, "Setup: New should have succeeded but didn't")
 
 			done := make(chan struct{})
@@ -106,16 +105,16 @@ func TestWait(t *testing.T) {
 func TestAppAlreadyExported(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
-	_, err := app.New(context.Background())
+	_, err := app.New()
 	require.NoError(t, err, "Setup: New should have succeeded but didn't")
-	_, err = app.New(context.Background())
+	_, err = app.New()
 	require.ErrorContains(t, err, "D-Bus name already taken")
 }
 
 func TestQuitApp(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
-	a, err := app.New(context.Background())
+	a, err := app.New()
 	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 	var appErr error
 	done := make(chan struct{})
@@ -138,7 +137,7 @@ func TestQuitAppWithQueuedRuns(t *testing.T) {
 
 	sleepDuration := 10 * time.Millisecond
 	mockProxy := &app.MockProxy{SleepOnApply: sleepDuration}
-	a, err := app.New(context.Background(), app.WithProxy(mockProxy), app.WithAuthorizer(&app.MockAuthorizer{}))
+	a, err := app.New(app.WithProxy(mockProxy), app.WithAuthorizer(&app.MockAuthorizer{}))
 	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 
 	done := make(chan struct{})
@@ -182,7 +181,7 @@ func TestQuitAppWithQueuedRuns(t *testing.T) {
 func TestMultipleRunsErrorsAreJoined(t *testing.T) {
 	defer testutils.StartLocalSystemBus()()
 
-	a, err := app.New(context.Background(), app.WithProxy(&app.MockProxy{ApplyError: true, SleepOnApply: 5 * time.Millisecond}), app.WithAuthorizer(&app.MockAuthorizer{}))
+	a, err := app.New(app.WithProxy(&app.MockProxy{ApplyError: true, SleepOnApply: 5 * time.Millisecond}), app.WithAuthorizer(&app.MockAuthorizer{}))
 	require.NoError(t, err, "Setup: New should have succeeded but didn't")
 
 	var appErr error

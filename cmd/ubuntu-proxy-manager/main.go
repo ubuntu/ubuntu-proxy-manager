@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -21,7 +20,7 @@ type cmd interface {
 }
 
 func main() {
-	c, err := app.New(context.Background())
+	c, err := app.New()
 	if err != nil {
 		log.Errorf("Failed to create app: %v", err)
 		os.Exit(1)
