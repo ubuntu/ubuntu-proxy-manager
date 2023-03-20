@@ -36,7 +36,7 @@ type PolkitObjMock struct {
 }
 
 // Call mocks the polkit object call.
-func (d *PolkitObjMock) Call(method string, flags dbus.Flags, args ...interface{}) *dbus.Call {
+func (d *PolkitObjMock) Call(_ string, _ dbus.Flags, args ...interface{}) *dbus.Call {
 	var errPolkit error
 
 	content, ok := args[1].(string)
@@ -73,7 +73,7 @@ type CredsObjMock struct {
 }
 
 // Call mocks the credentials object call.
-func (d *CredsObjMock) Call(method string, flags dbus.Flags, args ...interface{}) *dbus.Call {
+func (d *CredsObjMock) Call(_ string, _ dbus.Flags, _ ...interface{}) *dbus.Call {
 	var errCredsLookup error
 
 	if d.WantLookupError {

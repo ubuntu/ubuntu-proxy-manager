@@ -132,10 +132,7 @@ func safeWriteFile(path string, contents string) error {
 	if err := os.WriteFile(path+".new", []byte(contents), 0644); err != nil {
 		return err
 	}
-	if err := os.Rename(path+".new", path); err != nil {
-		return err
-	}
-	return nil
+	return os.Rename(path+".new", path)
 }
 
 // backupFileIfExists moves the given file to a backup file suffixed with .old,

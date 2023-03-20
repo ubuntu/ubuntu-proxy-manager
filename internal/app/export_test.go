@@ -20,7 +20,7 @@ type MockProxy struct {
 }
 
 // CheckSenderAllowed is a mock implementation of authorizerer, returning an error if requested in the mock.
-func (m *MockAuthorizer) CheckSenderAllowed(action string, sender dbus.Sender) (err error) {
+func (m *MockAuthorizer) CheckSenderAllowed(_ string, _ dbus.Sender) (err error) {
 	if m.RejectAuth {
 		err = errors.New("authorization rejected")
 	}

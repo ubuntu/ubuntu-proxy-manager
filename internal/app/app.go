@@ -2,7 +2,6 @@
 package app
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -106,7 +105,7 @@ func (b *proxyManagerBus) QuitRequested() bool {
 }
 
 // New creates a new App object.
-func New(ctx context.Context, args ...option) (a *App, err error) {
+func New(args ...option) (a *App, err error) {
 	defer decorate.OnError(&err, "cannot initialize application")
 
 	// Don't call dbus.SystemBus which caches globally system dbus (issues in tests)
