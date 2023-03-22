@@ -2,7 +2,7 @@ module github.com/ubuntu/ubuntu-proxy-manager/tools
 
 go 1.20
 
-require github.com/golangci/golangci-lint v1.52.0
+require github.com/golangci/golangci-lint v1.52.1
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
