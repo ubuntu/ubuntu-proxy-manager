@@ -1,5 +1,5 @@
 ubuntu-proxy-manager (0.1) lunar; urgency=medium
 
-  * Initial release
+  * Initial release (LP: #2012371)
 
- -- Gabriel Nagy <gabriel.nagy@canonical.com>  Thu, 09 Mar 2023 12:03:48 +0200
+ -- Gabriel Nagy <gabriel.nagy@canonical.com>  Wed, 05 Apr 2023 14:58:48 +0300
