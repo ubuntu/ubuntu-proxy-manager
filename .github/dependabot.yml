@@ -7,11 +7,15 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: "deps(go)"
 
   - package-ecosystem: "gomod"
     directory: "/tools"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: "deps(go-tools)"
 
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
@@ -19,3 +23,5 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: "deps(ci)"
