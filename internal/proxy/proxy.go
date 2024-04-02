@@ -118,7 +118,7 @@ func createParentDirectories(path string) error {
 	parentDir := filepath.Dir(path)
 
 	log.Debugf("Creating directory %q", parentDir)
-	// #nosec G301 - parent directory permissions are 0755, so we should keep the same pattern
+	//nolint:gosec // G301 - parent directory permissions are 0755, so we should keep the same pattern
 	if err := os.MkdirAll(parentDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
@@ -128,7 +128,7 @@ func createParentDirectories(path string) error {
 // safeWriteFile writes the given contents to path, applying the write to .new and
 // rename workflow.
 func safeWriteFile(path string, contents string) error {
-	// #nosec G306 - config file permissions are 0644, so we should keep the same pattern
+	//nolint:gosec // G306 - config file permissions are 0644, so we should keep the same pattern
 	if err := os.WriteFile(path+".new", []byte(contents), 0644); err != nil {
 		return err
 	}
