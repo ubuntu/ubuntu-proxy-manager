@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 Build-Depends: debhelper-compat (= 13),
                dh-golang,
-               golang-go (>= 2:1.20~),
+               golang-go (>= 2:1.22~),
                dbus,
 Standards-Version: 4.6.2
 XS-Go-Import-Path: github.com/ubuntu/ubuntu-proxy-manager
