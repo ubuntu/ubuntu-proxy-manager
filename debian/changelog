@@ -1,3 +1,20 @@
+ubuntu-proxy-manager (0.1.1) noble; urgency=medium
+
+  * Build with Go 1.22
+  * CI and quality of life changes not impacting package functionality:
+    - Silence gosec warnings using nolint and remove deprecated ifshort linter
+    - Bump github actions to latest:
+      - actions/checkout
+      - actions/setup-go
+  * Update dependencies to latest:
+      - github.com/golangci/golangci-lint
+      - github.com/sirupsen/logrus
+      - github.com/stretchr/testify
+      - golang.org/x/sync
+      - golang.org/x/tools
+
+ -- Gabriel Nagy <gabriel.nagy@canonical.com>  Tue, 23 Apr 2024 14:39:44 +0300
+
 ubuntu-proxy-manager (0.1) lunar; urgency=medium
 
   * Initial release (LP: #2012371)
