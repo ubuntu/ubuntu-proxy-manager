@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -211,5 +212,5 @@ func TestMultipleRunsErrorsAreJoined(t *testing.T) {
 func TestMain(m *testing.M) {
 	logrus.StandardLogger().SetLevel(logrus.DebugLevel)
 
-	m.Run()
+	os.Exit(m.Run())
 }
