@@ -286,5 +286,5 @@ func TestMain(m *testing.M) {
 	testutils.InstallUpdateFlag()
 	flag.Parse()
 
-	os.Exit(m.Run())
+	m.Run()
 }
