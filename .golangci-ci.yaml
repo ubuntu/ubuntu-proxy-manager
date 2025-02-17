@@ -42,13 +42,14 @@ issues:
     - 'Error return value of .*Close` is not checked'
   #fix: true # we don’t want this in CI
 
-nolintlint:
-  require-explanation: true
-  require-specific: true
-
 linters-settings:
    # Forbid the usage of deprecated ioutil and debug prints
   forbidigo:
     forbid:
       - ioutil\.
       - ^print(f|ln)?\($
+
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+
