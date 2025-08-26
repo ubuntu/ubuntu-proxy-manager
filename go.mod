@@ -2,7 +2,7 @@ module github.com/ubuntu/ubuntu-proxy-manager
 
 go 1.23.0
 
-toolchain go1.23.6
+toolchain go1.23.10
 
 require (
 	github.com/godbus/dbus/v5 v5.1.0
