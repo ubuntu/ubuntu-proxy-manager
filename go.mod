@@ -7,7 +7,7 @@ toolchain go1.23.10
 require (
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 	github.com/ubuntu/decorate v0.0.0-20230125165522-2d5b0a9bb117
 	golang.org/x/exp v0.0.0-20230223210539-50820d90acfd
