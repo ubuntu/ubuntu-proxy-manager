@@ -18,7 +18,7 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive apt install -y curl ca-certificates git
       - uses: actions/checkout@v5
       - name: Go code sanity check
-        uses: canonical/desktop-engineering/gh-actions/go/code-sanity@v1
+        uses: canonical/desktop-engineering/gh-actions/go/code-sanity@v2
         with:
           golangci-lint-configfile: ".golangci-ci.yaml"
           tools-directory: "tools"
