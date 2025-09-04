@@ -1,8 +1,8 @@
 module github.com/ubuntu/ubuntu-proxy-manager/tools
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.23.10
+toolchain go1.24.0
 
 require (
 	github.com/golangci/golangci-lint v1.63.4
