@@ -6,44 +6,48 @@
 
 # Please keep the list in sync.
 
+version: "2"
 linters:
-  fast: true
   # linters to run in addition to default ones
   enable:
     - dupl
-    #- durationcheck
-    #- errname
-    #- errorlint
-    #- exportloopref
     - forbidigo
     - forcetypeassert
-    - gci
     - godot
-    - gofmt
-    #- gosec
     - misspell
     - revive
-    #- thelper
-    #- tparallel
-    #- unconvert
-    #- unparam
-    #- wastedassign
-    #- whitespace
-    ##- wrapcheck # To think properly about it
-
-# Get all linter issues, even if duplicated
+  disable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+  settings:
+    # Forbid the usage of deprecated ioutil and debug prints
+    forbidigo:
+      forbid:
+        - pattern: ioutil\.
+        - pattern: ^print(f|ln)?\($
+  exclusions:
+    generated: lax
+    rules:
+      # EXC0001 errcheck: most errors are in defer calls, which are safe to ignore and idiomatic Go (would be good to only ignore defer ones though)
+      - path: (.+)\.go$
+        text: Error return value of .*Close` is not checked
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude:
-    # EXC0001 errcheck: most errors are in defer calls, which are safe to ignore and idiomatic Go (would be good to only ignore defer ones though)
-    - 'Error return value of .*Close` is not checked'
   fix: true # we want this in IDE.
-
-linters-settings:
-   # Forbid the usage of deprecated ioutil and debug prints
-  forbidigo:
-    forbid:
-      - ioutil\.
-      - ^print(f|ln)?\($
+formatters:
+  enable:
+    - gci
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

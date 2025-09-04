@@ -3,6 +3,7 @@
 
 # Please keep the list in sync with .golangci-ide.yaml. For rationale, see the other file.
 
+version: "2"
 linters:
   # linters to run in addition to default ones
   enable:
@@ -10,12 +11,9 @@ linters:
     - durationcheck
     - errname
     - errorlint
-    - exportloopref
     - forbidigo
     - forcetypeassert
-    - gci
     - godot
-    - gofmt
     - gosec
     - misspell
     - revive
@@ -25,26 +23,32 @@ linters:
     - unparam
     - wastedassign
     - whitespace
-    ##- wrapcheck # To think properly about it
-
-run:
-  # Most of the time, it’s taking less than 20s, but some builders are slower, so takes 2m
-  timeout: 2m
-
-# Get all linter issues, even if duplicated
+  settings:
+    # Forbid the usage of deprecated ioutil and debug prints
+    forbidigo:
+      forbid:
+        - pattern: ioutil\.
+        - pattern: ^print(f|ln)?\($
+  exclusions:
+    generated: lax
+    # EXC0001 errcheck: most errors are in defer calls, which are safe to ignore and idiomatic Go (would be good to only ignore defer ones though)
+    rules:
+      - path: (.+)\.go$
+        text: Error return value of .*Close` is not checked
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-
-  exclude:
-    # EXC0001 errcheck: most errors are in defer calls, which are safe to ignore and idiomatic Go (would be good to only ignore defer ones though)
-    - 'Error return value of .*Close` is not checked'
-  #fix: true # we don’t want this in CI
-
-linters-settings:
-   # Forbid the usage of deprecated ioutil and debug prints
-  forbidigo:
-    forbid:
-      - ioutil\.
-      - ^print(f|ln)?\($
+formatters:
+  enable:
+    - gci
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
