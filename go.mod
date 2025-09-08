@@ -1,8 +1,6 @@
 module github.com/ubuntu/ubuntu-proxy-manager
 
-go 1.23.0
-
-toolchain go1.23.10
+go 1.24.0
 
 require (
 	github.com/godbus/dbus/v5 v5.1.0
@@ -11,7 +9,7 @@ require (
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 	github.com/ubuntu/decorate v0.0.0-20230125165522-2d5b0a9bb117
 	golang.org/x/exp v0.0.0-20230223210539-50820d90acfd
-	golang.org/x/sync v0.16.0
+	golang.org/x/sync v0.17.0
 )
 
 require (
